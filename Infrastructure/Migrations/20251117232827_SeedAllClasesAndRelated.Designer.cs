@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    partial class GymDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251117232827_SeedAllClasesAndRelated")]
+    partial class SeedAllClasesAndRelated
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.5");
@@ -760,74 +763,6 @@ namespace Infrastructure.Migrations
                             PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
                             Role = "Profesor",
                             Telefono = "555-1007"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Activo = true,
-                            Apellido = "Santarelli",
-                            Discriminator = "Usuario",
-                            Dni = "1",
-                            Email = "simon@example.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(2005, 3, 12),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Simón",
-                            PasswordHash = "HfLlcoG+fBtUcKKRzzb3sTcc0Kk1P0qAGDSXV656AFKkzPJ5tGWmtiXdOVLmMjT7",
-                            Role = "SuperAdministrador",
-                            SucursalId = 1,
-                            Telefono = "3411234567"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Activo = true,
-                            Apellido = "Cumini",
-                            Discriminator = "Usuario",
-                            Dni = "39222001",
-                            Email = "fran@highfit.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1995, 5, 20),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Francisco",
-                            PasswordHash = "+yFOjDzWtkAR9lxanKPZsbY3Na3Kv5ZrRBOpG0nJfBt7YFf/LJurnWJrskA6QWT8",
-                            Role = "Administrador",
-                            SucursalId = 1,
-                            Telefono = "3412345678"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Activo = true,
-                            Apellido = "Cardillo",
-                            Discriminator = "Usuario",
-                            Dni = "39555111",
-                            Email = "pablo@highfit.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1996, 10, 3),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Pablo",
-                            PasswordHash = "hz5yIy4nK3ZmVcTPJki6YH0sTq3debyK804lrYE+bqI0Fgz7i/PXysORUKzjBtGH",
-                            Role = "Recepcionista",
-                            SucursalId = 1,
-                            Telefono = "3413456789"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Activo = true,
-                            Apellido = "Perez",
-                            Discriminator = "Alumno",
-                            Dni = "40111222",
-                            Email = "cliente@demo.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1997, 4, 1),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Cliente Demo",
-                            PasswordHash = "FNnfcvojVZDEjAzKc+6S3aD0QOHlc0vd6lIRLQ7Nt1pYxgP/TtcZvobB9F/gp+vO",
-                            Role = "Alumno",
-                            SucursalId = 1,
-                            Telefono = "+5493415555555"
                         });
                 });
 

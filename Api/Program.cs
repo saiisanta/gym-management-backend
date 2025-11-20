@@ -1,3 +1,4 @@
+using System.Text;
 using Application.Abstractions;
 using Application.Services;
 using Infrastructure.Persistence;
@@ -5,21 +6,22 @@ using Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
-using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-             ?? builder.Configuration["Jwt:Key"];
+var jwtKey =
+    Environment.GetEnvironmentVariable("JWT_SECRET_KEY") ?? builder.Configuration["Jwt:Key"];
 
 if (string.IsNullOrEmpty(jwtKey))
 {
     throw new InvalidOperationException(
-        "JWT Secret Key no configurada. " +
-        "Configure la variable de entorno JWT_SECRET_KEY o agregue Jwt:Key en appsettings.Development.json");
+        "JWT Secret Key no configurada. "
+            + "Configure la variable de entorno JWT_SECRET_KEY o agregue Jwt:Key en appsettings.Development.json"
+    );
 }
 
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+builder
+    .Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
@@ -30,8 +32,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
             ValidAudience = builder.Configuration["Jwt:Audience"],
-            IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(jwtKey))
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
         };
     });
 
@@ -40,50 +41,84 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("AlumnoPolicy", policy => policy.RequireRole("Alumno"));
     options.AddPolicy("ProfesorPolicy", policy => policy.RequireRole("Profesor"));
     options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Administrador"));
-    options.AddPolicy("AdminOrSuperAdminPolicy", policy => policy.RequireRole("Administrador", "SuperAdministrador"));
+    options.AddPolicy(
+        "AdminOrSuperAdminPolicy",
+        policy => policy.RequireRole("Administrador", "SuperAdministrador")
+    );
 });
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowFrontend", policy =>
-    {
-        policy.WithOrigins("http://localhost:5173")
-              .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials();
-    });
+    options.AddPolicy(
+        "AllowFrontend",
+        policy =>
+        {
+            policy
+                .WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
+        }
+    );
 });
+
+// ---- BEGIN: Geocoding proxy requirements ----
+// Cache en memoria (evita golpear Nominatim con la misma query)
+builder.Services.AddMemoryCache();
+
+// Registrar HttpClient configurado para Nominatim
+builder.Services.AddHttpClient(
+    "Nominatim",
+    client =>
+    {
+        client.BaseAddress = new Uri("https://nominatim.openstreetmap.org/");
+        // User-Agent obligatorio según la política de Nominatim (incluye email)
+        client.DefaultRequestHeaders.UserAgent.ParseAdd(
+            "HighFitApp/1.0 (simisantarelli@gmail.com)"
+        );
+        client.DefaultRequestHeaders.AcceptLanguage.ParseAdd("es");
+    }
+);
+
+// --
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(c =>
 {
-    c.AddSecurityDefinition("Bearer", new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT",
-        In = Microsoft.OpenApi.Models.ParameterLocation.Header,
-        Description = "Ingrese el token JWT en el formato: Bearer {token}"
-    });
-
-    c.AddSecurityRequirement(new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
-    {
+    c.AddSecurityDefinition(
+        "Bearer",
+        new Microsoft.OpenApi.Models.OpenApiSecurityScheme
         {
-            new Microsoft.OpenApi.Models.OpenApiSecurityScheme
-            {
-                Reference = new Microsoft.OpenApi.Models.OpenApiReference
-                {
-                    Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
+            Name = "Authorization",
+            Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
+            Scheme = "bearer",
+            BearerFormat = "JWT",
+            In = Microsoft.OpenApi.Models.ParameterLocation.Header,
+            Description = "Ingrese el token JWT en el formato: Bearer {token}",
         }
-    });
+    );
+
+    c.AddSecurityRequirement(
+        new Microsoft.OpenApi.Models.OpenApiSecurityRequirement
+        {
+            {
+                new Microsoft.OpenApi.Models.OpenApiSecurityScheme
+                {
+                    Reference = new Microsoft.OpenApi.Models.OpenApiReference
+                    {
+                        Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme,
+                        Id = "Bearer",
+                    },
+                },
+                Array.Empty<string>()
+            },
+        }
+    );
 });
-builder.Services.AddDbContext<GymDbContext>(options => options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<GymDbContext>(options =>
+    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
+);
 
 builder.Services.AddScoped<IAlumnoService, AlumnoService>();
 builder.Services.AddScoped<IProfesorService, ProfesorService>();

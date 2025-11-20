@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(GymDbContext))]
-    partial class GymDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251115012023_SeedPlanes")]
+    partial class SeedPlanes
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.5");
@@ -102,134 +105,6 @@ namespace Infrastructure.Migrations
                     b.HasIndex("SucursalId");
 
                     b.ToTable("Clases");
-
-                    b.HasData(
-                        new
-                        {
-                            Id = 1,
-                            Activa = true,
-                            Capacidad = 15,
-                            Descripcion = "Clase suave para activar el cuerpo y la mente. Ideal para empezar el día con energía.",
-                            Dias = "[\"Lunes\",\"Miércoles\",\"Viernes\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 11),
-                            HoraInicio = new TimeOnly(0, 0, 0),
-                            Imagen = "https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&w=800&q=80",
-                            MostrarEnHome = true,
-                            Nombre = "Yoga Matinal",
-                            ProfesorId = 2,
-                            SalaId = 1,
-                            SucursalId = 1,
-                            Tipo = "general"
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Activa = true,
-                            Capacidad = 20,
-                            Descripcion = "Entrenamiento cardiovascular sobre bicicletas fijas, con música y mucha energía.",
-                            Dias = "[\"Martes\",\"Jueves\",\"Sábado\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 10),
-                            HoraInicio = new TimeOnly(18, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/4853854/pexels-photo-4853854.jpeg",
-                            MostrarEnHome = true,
-                            Nombre = "Spin Intenso",
-                            ProfesorId = 2,
-                            SalaId = 2,
-                            SucursalId = 2,
-                            Tipo = "general"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Activa = true,
-                            Capacidad = 18,
-                            Descripcion = "Sesiones de alta intensidad con pesas, cardio y fuerza funcional.",
-                            Dias = "[\"Lunes\",\"Martes\",\"Jueves\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 11),
-                            HoraInicio = new TimeOnly(17, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/7674492/pexels-photo-7674492.jpeg",
-                            MostrarEnHome = true,
-                            Nombre = "CrossFit Power",
-                            ProfesorId = 3,
-                            SalaId = 3,
-                            SucursalId = 3,
-                            Tipo = "especializada"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Activa = true,
-                            Capacidad = 12,
-                            Descripcion = "Fortalecé tu zona media con ejercicios controlados y precisos.",
-                            Dias = "[\"Miércoles\",\"Viernes\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 12),
-                            HoraInicio = new TimeOnly(13, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/3775524/pexels-photo-3775524.jpeg",
-                            MostrarEnHome = true,
-                            Nombre = "Pilates Core",
-                            ProfesorId = 4,
-                            SalaId = 4,
-                            SucursalId = 1,
-                            Tipo = "general"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Activa = true,
-                            Capacidad = 16,
-                            Descripcion = "Entrenamiento completo en 45 minutos. Ideal para quienes tienen poco tiempo.",
-                            Dias = "[\"Martes\",\"Jueves\"]",
-                            DuracionMinutos = 45,
-                            Fecha = new DateOnly(2025, 10, 12),
-                            HoraInicio = new TimeOnly(13, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/2294361/pexels-photo-2294361.jpeg",
-                            MostrarEnHome = false,
-                            Nombre = "Funcional Express",
-                            ProfesorId = 5,
-                            SalaId = 5,
-                            SucursalId = 2,
-                            Tipo = "general"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Activa = true,
-                            Capacidad = 25,
-                            Descripcion = "Baile, energía y diversión. Quemás calorías sin darte cuenta.",
-                            Dias = "[\"Lunes\",\"Miércoles\",\"Sábado\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 12),
-                            HoraInicio = new TimeOnly(19, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/8436601/pexels-photo-8436601.jpeg",
-                            MostrarEnHome = false,
-                            Nombre = "Zumba Party",
-                            ProfesorId = 6,
-                            SalaId = 6,
-                            SucursalId = 3,
-                            Tipo = "general"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Activa = true,
-                            Capacidad = 14,
-                            Descripcion = "Ideal para la recuperación muscular y la relajación post entrenamiento.",
-                            Dias = "[\"Miércoles\",\"Viernes\",\"Domingo\"]",
-                            DuracionMinutos = 60,
-                            Fecha = new DateOnly(2025, 10, 13),
-                            HoraInicio = new TimeOnly(20, 0, 0),
-                            Imagen = "https://images.pexels.com/photos/3076509/pexels-photo-3076509.jpeg",
-                            MostrarEnHome = false,
-                            Nombre = "Stretch & Relax",
-                            ProfesorId = 7,
-                            SalaId = 7,
-                            SucursalId = 1,
-                            Tipo = "general"
-                        });
                 });
 
             modelBuilder.Entity("Domain.Entities.Membresia", b =>
@@ -363,10 +238,10 @@ namespace Infrastructure.Migrations
                             Activo = true,
                             Descripcion = "Acceso a clases generales y recursos introductorios. Ideal para quienes recién comienzan.",
                             DuracionDias = 30,
-                            MaxReservasPorMes = 8,
+                            MaxReservasPorMes = 10,
                             Nombre = "Básico",
-                            Precio = 25000m,
-                            TiposPermitidos = "[\"general\"]"
+                            Precio = 20000m,
+                            TiposPermitidos = "general"
                         },
                         new
                         {
@@ -377,7 +252,7 @@ namespace Infrastructure.Migrations
                             MaxReservasPorMes = 20,
                             Nombre = "Avanzado",
                             Precio = 40000m,
-                            TiposPermitidos = "[]"
+                            TiposPermitidos = "general"
                         },
                         new
                         {
@@ -385,9 +260,10 @@ namespace Infrastructure.Migrations
                             Activo = true,
                             Descripcion = "Acceso ilimitado a todos los cursos, mentorías personalizadas y beneficios exclusivos.",
                             DuracionDias = 30,
+                            MaxReservasPorMes = 30,
                             Nombre = "Premium",
-                            Precio = 55000m,
-                            TiposPermitidos = "[]"
+                            Precio = 50000m,
+                            TiposPermitidos = "general"
                         });
                 });
 
@@ -491,36 +367,6 @@ namespace Infrastructure.Migrations
                             Nombre = "Sala 2",
                             SucursalId = 2,
                             Tipo = "Pesas"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Activa = true,
-                            Capacidad = 22,
-                            Descripcion = "Sala de cardio con equipamiento variado",
-                            Nombre = "Sala 5",
-                            SucursalId = 2,
-                            Tipo = "Cardio"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Activa = true,
-                            Capacidad = 30,
-                            Descripcion = "Espacio amplio para clases de baile y zumba",
-                            Nombre = "Sala 6",
-                            SucursalId = 3,
-                            Tipo = "Baile"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Activa = true,
-                            Capacidad = 18,
-                            Descripcion = "Estudio pequeño para sesiones especializadas",
-                            Nombre = "Sala 7",
-                            SucursalId = 1,
-                            Tipo = "Estudio"
                         });
                 });
 
@@ -571,15 +417,6 @@ namespace Infrastructure.Migrations
                             Email = "norte@gym.com",
                             Nombre = "Sucursal Norte",
                             Telefono = "555-0002"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Activa = true,
-                            Direccion = "Av. Sur 789",
-                            Email = "sur@gym.com",
-                            Nombre = "Sucursal Sur",
-                            Telefono = "555-0003"
                         });
                 });
 
@@ -670,164 +507,6 @@ namespace Infrastructure.Migrations
                             PasswordHash = "PrP+ZrMeO00Q+nC1ytSccRIpSvauTkdqHEBRVdRaoSE=",
                             Role = "Administrador",
                             Telefono = ""
-                        },
-                        new
-                        {
-                            Id = 2,
-                            Activo = true,
-                            Apellido = "González",
-                            Discriminator = "Profesor",
-                            Dni = "11111111",
-                            Email = "maria.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1985, 6, 12),
-                            Nombre = "María",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1002"
-                        },
-                        new
-                        {
-                            Id = 3,
-                            Activo = true,
-                            Apellido = "Pérez",
-                            Discriminator = "Profesor",
-                            Dni = "22222222",
-                            Email = "carlos.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1980, 3, 2),
-                            Nombre = "Carlos",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1003"
-                        },
-                        new
-                        {
-                            Id = 4,
-                            Activo = true,
-                            Apellido = "Ramírez",
-                            Discriminator = "Profesor",
-                            Dni = "33333333",
-                            Email = "lucia.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1990, 11, 5),
-                            Nombre = "Lucía",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1004"
-                        },
-                        new
-                        {
-                            Id = 5,
-                            Activo = true,
-                            Apellido = "Suárez",
-                            Discriminator = "Profesor",
-                            Dni = "44444444",
-                            Email = "martin.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1988, 8, 20),
-                            Nombre = "Martín",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1005"
-                        },
-                        new
-                        {
-                            Id = 6,
-                            Activo = true,
-                            Apellido = "López",
-                            Discriminator = "Profesor",
-                            Dni = "55555555",
-                            Email = "sofia.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1992, 2, 14),
-                            Nombre = "Sofía",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1006"
-                        },
-                        new
-                        {
-                            Id = 7,
-                            Activo = true,
-                            Apellido = "Fernández",
-                            Discriminator = "Profesor",
-                            Dni = "66666666",
-                            Email = "diego.profe@gym.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1983, 9, 30),
-                            Nombre = "Diego",
-                            PasswordHash = "K3gLVAHR3OIvAHe3dyrKl2HIfEdJOYoutYwq0/5Vjrw=",
-                            Role = "Profesor",
-                            Telefono = "555-1007"
-                        },
-                        new
-                        {
-                            Id = 1,
-                            Activo = true,
-                            Apellido = "Santarelli",
-                            Discriminator = "Usuario",
-                            Dni = "1",
-                            Email = "simon@example.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(2005, 3, 12),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Simón",
-                            PasswordHash = "HfLlcoG+fBtUcKKRzzb3sTcc0Kk1P0qAGDSXV656AFKkzPJ5tGWmtiXdOVLmMjT7",
-                            Role = "SuperAdministrador",
-                            SucursalId = 1,
-                            Telefono = "3411234567"
-                        },
-                        new
-                        {
-                            Id = 8,
-                            Activo = true,
-                            Apellido = "Cumini",
-                            Discriminator = "Usuario",
-                            Dni = "39222001",
-                            Email = "fran@highfit.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1995, 5, 20),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Francisco",
-                            PasswordHash = "+yFOjDzWtkAR9lxanKPZsbY3Na3Kv5ZrRBOpG0nJfBt7YFf/LJurnWJrskA6QWT8",
-                            Role = "Administrador",
-                            SucursalId = 1,
-                            Telefono = "3412345678"
-                        },
-                        new
-                        {
-                            Id = 9,
-                            Activo = true,
-                            Apellido = "Cardillo",
-                            Discriminator = "Usuario",
-                            Dni = "39555111",
-                            Email = "pablo@highfit.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1996, 10, 3),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Pablo",
-                            PasswordHash = "hz5yIy4nK3ZmVcTPJki6YH0sTq3debyK804lrYE+bqI0Fgz7i/PXysORUKzjBtGH",
-                            Role = "Recepcionista",
-                            SucursalId = 1,
-                            Telefono = "3413456789"
-                        },
-                        new
-                        {
-                            Id = 10,
-                            Activo = true,
-                            Apellido = "Perez",
-                            Discriminator = "Alumno",
-                            Dni = "40111222",
-                            Email = "cliente@demo.com",
-                            FailedLoginAttempts = 0,
-                            FechaNacimiento = new DateOnly(1997, 4, 1),
-                            Image = "https://placehold.co/120x120?text=User",
-                            Nombre = "Cliente Demo",
-                            PasswordHash = "FNnfcvojVZDEjAzKc+6S3aD0QOHlc0vd6lIRLQ7Nt1pYxgP/TtcZvobB9F/gp+vO",
-                            Role = "Alumno",
-                            SucursalId = 1,
-                            Telefono = "+5493415555555"
                         });
                 });
 

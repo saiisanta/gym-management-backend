@@ -12,13 +12,14 @@ namespace Presentation.Controllers
     public class ClasesController : ControllerBase
     {
         private readonly IClaseService _claseService;
+
         public ClasesController(IClaseService claseService)
         {
             _claseService = claseService;
         }
 
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous]
         public ActionResult<List<ClaseResponse>> GetAll([FromQuery] int? sucursalId)
         {
             var clases = sucursalId.HasValue
@@ -43,7 +44,8 @@ namespace Presentation.Controllers
         public ActionResult<ClaseResponse> GetById(int id)
         {
             var clase = _claseService.GetById(id);
-            if (clase == null) return NotFound();
+            if (clase == null)
+                return NotFound();
             return Ok(clase);
         }
 
@@ -63,7 +65,9 @@ namespace Presentation.Controllers
             if (request.DuracionMinutos <= 0)
                 return BadRequest("La duración debe ser mayor a 0.");
 
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != request.ProfesorId.ToString())
@@ -85,7 +89,9 @@ namespace Presentation.Controllers
             if (request == null)
                 return BadRequest("La solicitud no puede ser nula.");
 
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             var profesorIdClase = _claseService.GetProfesorIdByClaseId(id);
@@ -110,7 +116,9 @@ namespace Presentation.Controllers
         [Authorize(Roles = "Profesor,Administrador")]
         public IActionResult Delete(int id)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             var profesorIdClase = _claseService.GetProfesorIdByClaseId(id);
@@ -125,7 +133,8 @@ namespace Presentation.Controllers
             }
 
             var resultado = _claseService.Delete(id);
-            if (!resultado) return NotFound("Clase no encontrada.");
+            if (!resultado)
+                return NotFound("Clase no encontrada.");
 
             return Ok(new { message = "Clase eliminada exitosamente." });
         }

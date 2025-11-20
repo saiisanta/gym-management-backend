@@ -24,12 +24,17 @@ namespace Presentation.Controllers
             if (!alumnoId.HasValue)
                 return BadRequest("El parámetro alumnoId es requerido.");
 
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != alumnoId.ToString())
             {
-                return StatusCode(403, "No tiene permisos para ver las membresías de otro usuario.");
+                return StatusCode(
+                    403,
+                    "No tiene permisos para ver las membresías de otro usuario."
+                );
             }
 
             var membresias = _membresiaService.GetByAlumnoId(alumnoId.Value);
