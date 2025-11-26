@@ -1,8 +1,8 @@
-﻿using Application.Abstractions;
+﻿using System.Text.Json;
+using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
-using System.Text.Json;
 
 namespace Application.Services
 {
@@ -10,6 +10,7 @@ namespace Application.Services
     {
         private readonly IClaseRepository _claseRepository;
         private readonly IReservaRepository _reservaRepository;
+
         public ClaseService(IClaseRepository claseRepository, IReservaRepository reservaRepository)
         {
             _claseRepository = claseRepository;
@@ -20,11 +21,14 @@ namespace Application.Services
         {
             try
             {
-                if (_claseRepository.TieneConflictoHorario(
-                    request.ProfesorId,
-                    request.Fecha,
-                    request.HoraInicio,
-                    request.DuracionMinutos))
+                if (
+                    _claseRepository.TieneConflictoHorario(
+                        request.ProfesorId,
+                        request.Fecha,
+                        request.HoraInicio,
+                        request.DuracionMinutos
+                    )
+                )
                 {
                     return false;
                 }
@@ -41,12 +45,13 @@ namespace Application.Services
                     DuracionMinutos = request.DuracionMinutos,
                     HoraInicio = request.HoraInicio,
                     Fecha = request.Fecha,
-                    Dias = request.Dias != null && request.Dias.Any()
-                        ? JsonSerializer.Serialize(request.Dias)
-                        : null,
+                    Dias =
+                        request.Dias != null && request.Dias.Any()
+                            ? JsonSerializer.Serialize(request.Dias)
+                            : null,
                     Capacidad = request.Capacidad,
                     MostrarEnHome = request.MostrarEnHome,
-                    Activa = true
+                    Activa = true,
                 };
 
                 return _claseRepository.Create(clase);
@@ -71,7 +76,8 @@ namespace Application.Services
 
         public List<ClaseResponse> GetByProfesorId(int profesorId)
         {
-            var clases = _claseRepository.GetAll()
+            var clases = _claseRepository
+                .GetAll()
                 .Where(c => c.ProfesorId == profesorId && c.Activa)
                 .ToList();
 
@@ -80,9 +86,7 @@ namespace Application.Services
 
         public List<ClaseResponse> GetBySucursalId(int sucursalId)
         {
-            var clases = _claseRepository.GetAll()
-                .Where(c => c.SucursalId == sucursalId && c.Activa)
-                .ToList();
+            var clases = _claseRepository.GetBySucursalId(sucursalId);
 
             return clases.Select(MapToClaseResponse).ToList();
         }
@@ -90,7 +94,8 @@ namespace Application.Services
         public ClaseResponse? GetById(int id)
         {
             var clase = _claseRepository.GetById(id);
-            if (clase == null) return null;
+            if (clase == null)
+                return null;
 
             return MapToClaseResponse(clase);
         }
@@ -104,7 +109,8 @@ namespace Application.Services
         public bool Update(int id, UpdateClaseRequest request)
         {
             var clase = _claseRepository.GetById(id);
-            if (clase == null) return false;
+            if (clase == null)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 clase.Nombre = request.Nombre;
@@ -129,9 +135,7 @@ namespace Application.Services
 
             if (request.Dias != null)
             {
-                clase.Dias = request.Dias.Any()
-                    ? JsonSerializer.Serialize(request.Dias)
-                    : null;
+                clase.Dias = request.Dias.Any() ? JsonSerializer.Serialize(request.Dias) : null;
             }
 
             if (request.Capacidad.HasValue && request.Capacidad.Value > 0)
@@ -146,7 +150,8 @@ namespace Application.Services
         public bool Delete(int id)
         {
             var clase = _claseRepository.GetById(id);
-            if (clase == null) return false;
+            if (clase == null)
+                return false;
 
             return _claseRepository.Delete(clase);
         }
@@ -206,7 +211,7 @@ namespace Application.Services
                 Duracion = clase.DuracionMinutos,
                 HoraInicio = clase.HoraInicio,
                 Fecha = clase.Fecha,
-                Capacidad = clase.Capacidad
+                Capacidad = clase.Capacidad,
             };
         }
     }

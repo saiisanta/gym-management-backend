@@ -1,8 +1,10 @@
-﻿using Application.Abstractions;
+﻿// Application/Services/AuthService.cs (CÓDIGO FINAL CORREGIDO)
+using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
 using System.Security.Cryptography;
+using System;
 
 namespace Application.Services
 {
@@ -31,6 +33,18 @@ namespace Application.Services
             _usuarioRepository = usuarioRepository;
         }
 
+        // Helper para convertir DateOnly (no nullable) a DateTime? (nullable) para el JSON
+        private DateTime? DateOnlyToNullableDateTime(DateOnly dateOnly)
+        {
+            // Usamos default(DateOnly) para chequear si el valor es el valor mínimo (indicando "no asignado" si no se proporciona)
+            if (dateOnly == default(DateOnly))
+            {
+                return null;
+            }
+            // Convierte DateOnly a DateTime (con la hora mínima)
+            return dateOnly.ToDateTime(TimeOnly.MinValue);
+        }
+
         public AuthResponse? Register(RegisterRequest request)
         {
             if (request.Role == "Alumno")
@@ -51,7 +65,11 @@ namespace Application.Services
                     FechaNacimiento = request.FechaNacimiento,
                     Activo = true,
                     PasswordHash = HashPassword(request.Password),
-                    Role = "Alumno"
+                    Role = "Alumno",
+                    SucursalId = request.SucursalId, 
+                    Direccion = request.Direccion, 
+                    Genero = request.Genero, 
+                    Image = request.Image
                 };
 
                 if (!_alumnoRepository.Create(alumno)) return null;
@@ -69,7 +87,17 @@ namespace Application.Services
                 {
                     Id = alumno.Id,
                     Nombre = alumno.Nombre,
+                    Apellido = alumno.Apellido,
                     Role = alumno.Role,
+                    Email = alumno.Email,
+                    Dni = alumno.Dni,
+                    TelNumber = alumno.Telefono,
+                    FechaNacimiento = DateOnlyToNullableDateTime(alumno.FechaNacimiento),
+                    Direccion = alumno.Direccion,
+                    Genero = alumno.Genero,
+                    SucursalId = alumno.SucursalId,
+                    Image = alumno.Image,
+                    Plan = request.PlanId 
                 };
             }
             else if (request.Role == "Profesor")
@@ -86,7 +114,11 @@ namespace Application.Services
                     Telefono = request.Telefono,
                     Activo = true,
                     PasswordHash = HashPassword(request.Password),
-                    Role = "Profesor"
+                    Role = "Profesor",
+                    SucursalId = request.SucursalId,
+                    Direccion = request.Direccion,
+                    Genero = request.Genero,
+                    Image = request.Image
                 };
 
                 if (!_profesorRepository.Create(profesor)) return null;
@@ -95,7 +127,17 @@ namespace Application.Services
                 {
                     Id = profesor.Id,
                     Nombre = profesor.Nombre,
+                    Apellido = profesor.Apellido,
                     Role = profesor.Role,
+                    Email = profesor.Email,
+                    Dni = profesor.Dni,
+                    TelNumber = profesor.Telefono,
+                    FechaNacimiento = DateOnlyToNullableDateTime(profesor.FechaNacimiento),
+                    Direccion = profesor.Direccion,
+                    Genero = profesor.Genero,
+                    SucursalId = profesor.SucursalId,
+                    Image = profesor.Image,
+                    Plan = null 
                 };
             }
 
@@ -122,11 +164,23 @@ namespace Application.Services
                     _usuarioRepository.Update(usuario);
                 }
 
+                // Mapeo completo del objeto de usuario en la respuesta de login
                 return new AuthResponse
                 {
                     Id = usuario.Id,
                     Nombre = usuario.Nombre,
-                    Role = usuario.Role
+                    Apellido = usuario.Apellido,
+                    Role = usuario.Role,
+                    Email = usuario.Email,
+                    Dni = usuario.Dni,
+                    TelNumber = usuario.Telefono,
+                    Genero = usuario.Genero,
+                    FechaNacimiento = DateOnlyToNullableDateTime(usuario.FechaNacimiento), // CORREGIDO
+                    Direccion = usuario.Direccion,
+                    Estado = usuario.Activo ? "Activo" : "Inactivo",
+                    Plan = usuario.PlanId, // CORREGIDO (Ya existe en Usuario.cs)
+                    SucursalId = usuario.SucursalId, 
+                    Image = usuario.Image
                 };
             }
 

@@ -11,5 +11,9 @@
         public string Password { get; set; }
         public string Role { get; set; } = "Alumno";
         public int PlanId { get; set; }
+        public int? SucursalId { get; set; } 
+        public string Direccion { get; set; }
+        public string Genero { get; set; }
+        public string Image { get; set; }
     }
 }

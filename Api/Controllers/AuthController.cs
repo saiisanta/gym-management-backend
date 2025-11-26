@@ -28,6 +28,33 @@ namespace Presentation.Controllers
             _usuarioRepository = usuarioRepository;
         }
 
+        private string GenerateJwtToken(AuthResponse authResult, string email)
+        {
+            var claims = new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, authResult.Id.ToString()),
+                new Claim(ClaimTypes.Email, email),
+                new Claim(ClaimTypes.Role, authResult.Role)
+            };
+
+            var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
+                             ?? _configuration["Jwt:Key"]
+                             ?? throw new InvalidOperationException("JWT Key no configurada");
+
+            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
+            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+            var token = new JwtSecurityToken(
+                issuer: _configuration["Jwt:Issuer"],
+                audience: _configuration["Jwt:Audience"],
+                claims: claims,
+                expires: DateTime.UtcNow.AddHours(1),
+                signingCredentials: creds
+            );
+
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
+
         [HttpPost("register")]
         public IActionResult Register(RegisterRequest request)
         {
@@ -58,37 +85,11 @@ namespace Presentation.Controllers
                 return BadRequest("No se pudo crear la cuenta. Verifique los datos e intente nuevamente.");
             }
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, authResult.Id.ToString()),
-                new Claim(ClaimTypes.Email, request.Email),
-                new Claim(ClaimTypes.Role, authResult.Role)
-            };
+            var tokenString = GenerateJwtToken(authResult, request.Email);
+            authResult.Token = tokenString;
 
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                         ?? _configuration["Jwt:Key"]
-                         ?? throw new InvalidOperationException("JWT Key no configurada");
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: creds
-            );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return Ok(new
-            {
-                token = tokenString,
-                role = authResult.Role,
-                id = authResult.Id,
-                nombre = authResult.Nombre
-            });
+            // Retornamos el objeto AuthResponse COMPLETO
+            return Ok(authResult);
         }
 
         [HttpPost("login")]
@@ -113,37 +114,11 @@ namespace Presentation.Controllers
                 return Unauthorized("Credenciales incorrectas.");
             }
 
-            var claims = new[]
-            {
-                new Claim(ClaimTypes.NameIdentifier, authResponse.Id.ToString()),
-                new Claim(ClaimTypes.Email, request.Email),
-                new Claim(ClaimTypes.Role, authResponse.Role)
-            };
+            var tokenString = GenerateJwtToken(authResponse, request.Email);
+            authResponse.Token = tokenString;
 
-            var jwtKey = Environment.GetEnvironmentVariable("JWT_SECRET_KEY")
-                         ?? _configuration["Jwt:Key"]
-                         ?? throw new InvalidOperationException("JWT Key no configurada");
-
-            var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
-            var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-
-            var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:Issuer"],
-                audience: _configuration["Jwt:Audience"],
-                claims: claims,
-                expires: DateTime.UtcNow.AddHours(1),
-                signingCredentials: creds
-            );
-
-            var tokenString = new JwtSecurityTokenHandler().WriteToken(token);
-
-            return Ok(new
-            {
-                token = tokenString,
-                role = authResponse.Role,
-                id = authResponse.Id,
-                nombre = authResponse.Nombre
-            });
+            // Retornamos el objeto AuthResponse COMPLETO
+            return Ok(authResponse);
         }
     }
 }

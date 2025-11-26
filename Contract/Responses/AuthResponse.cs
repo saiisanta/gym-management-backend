@@ -6,5 +6,18 @@
         public string Role { get; set; }
         public int Id { get; set; }
         public string Nombre { get; set; }
+        
+        // Propiedades de Perfil Añadidas
+        public string Apellido { get; set; }
+        public string Email { get; set; }
+        public string TelNumber { get; set; }
+        public string Dni { get; set; }
+        public string Genero { get; set; }
+        public DateTime? FechaNacimiento { get; set; } // Usamos DateTime para ser compatible con JSON
+        public string Direccion { get; set; }
+        public string Estado { get; set; }
+        public int? Plan { get; set; }
+        public int? SucursalId { get; set; } // CLAVE: SucursalId
+        public string Image { get; set; }
     }
 }
