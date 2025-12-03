@@ -1,5 +1,4 @@
-﻿// Application/Services/AuthService.cs (CÓDIGO FINAL CORREGIDO)
-using Application.Abstractions;
+﻿using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
@@ -33,15 +32,12 @@ namespace Application.Services
             _usuarioRepository = usuarioRepository;
         }
 
-        // Helper para convertir DateOnly (no nullable) a DateTime? (nullable) para el JSON
         private DateTime? DateOnlyToNullableDateTime(DateOnly dateOnly)
         {
-            // Usamos default(DateOnly) para chequear si el valor es el valor mínimo (indicando "no asignado" si no se proporciona)
             if (dateOnly == default(DateOnly))
             {
                 return null;
             }
-            // Convierte DateOnly a DateTime (con la hora mínima)
             return dateOnly.ToDateTime(TimeOnly.MinValue);
         }
 
@@ -164,7 +160,6 @@ namespace Application.Services
                     _usuarioRepository.Update(usuario);
                 }
 
-                // Mapeo completo del objeto de usuario en la respuesta de login
                 return new AuthResponse
                 {
                     Id = usuario.Id,
@@ -175,10 +170,10 @@ namespace Application.Services
                     Dni = usuario.Dni,
                     TelNumber = usuario.Telefono,
                     Genero = usuario.Genero,
-                    FechaNacimiento = DateOnlyToNullableDateTime(usuario.FechaNacimiento), // CORREGIDO
+                    FechaNacimiento = DateOnlyToNullableDateTime(usuario.FechaNacimiento),
                     Direccion = usuario.Direccion,
                     Estado = usuario.Activo ? "Activo" : "Inactivo",
-                    Plan = usuario.PlanId, // CORREGIDO (Ya existe en Usuario.cs)
+                    Plan = usuario.PlanId,
                     SucursalId = usuario.SucursalId, 
                     Image = usuario.Image
                 };

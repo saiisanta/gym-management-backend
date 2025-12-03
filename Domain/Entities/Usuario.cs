@@ -18,10 +18,7 @@ namespace Domain.Entities
         public string? Direccion { get; set; }
         public string? Image { get; set; }
         public int? SucursalId { get; set; }
-        
-        // 💡 PROPIEDAD AÑADIDA PARA RESOLVER ERROR CS1061
-        public int? PlanId { get; set; } 
-        
+        public int? PlanId { get; set; }
         public bool Activo { get; set; }
         public int FailedLoginAttempts { get; set; } = 0;
         public DateTime? LockoutEnd { get; set; }
