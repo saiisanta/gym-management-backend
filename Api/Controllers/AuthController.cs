@@ -18,6 +18,7 @@ namespace Presentation.Controllers
         private readonly IAuthService _authService;
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IConfiguration _configuration;
+
         public AuthController(
             IAuthService authService,
             IConfiguration configuration,
@@ -56,7 +57,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register(RegisterRequest request)
+        public async Task<IActionResult> Register([FromBody] RegisterRequest request)
         {
             if (request == null)
                 return BadRequest("La solicitud no puede estar vacía.");
@@ -76,7 +77,7 @@ namespace Presentation.Controllers
             if (request.PlanId <= 0 && request.Role == "Alumno")
                 return BadRequest("Debe seleccionar un plan válido.");
 
-            var authResult = _authService.Register(request);
+            var authResult = await _authService.Register(request); // <-- await
             if (authResult == null)
             {
                 if (_usuarioRepository.ExistsByEmail(request.Email))
@@ -88,12 +89,11 @@ namespace Presentation.Controllers
             var tokenString = GenerateJwtToken(authResult, request.Email);
             authResult.Token = tokenString;
 
-            // Retornamos el objeto AuthResponse COMPLETO
             return Ok(authResult);
         }
 
         [HttpPost("login")]
-        public IActionResult Login(LoginRequest request)
+        public async Task<IActionResult> Login([FromBody] LoginRequest request)
         {
             var usuario = _usuarioRepository.GetWithPasswordByEmail(request.Email);
             if (usuario != null && usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
@@ -102,7 +102,7 @@ namespace Presentation.Controllers
                 return StatusCode(423, $"Cuenta bloqueada temporalmente por múltiples intentos fallidos. Intente nuevamente en {minutosRestantes} minuto(s).");
             }
 
-            var authResponse = _authService.Login(request);
+            var authResponse = await _authService.Login(request); // <-- await
             if (authResponse == null)
             {
                 usuario = _usuarioRepository.GetWithPasswordByEmail(request.Email);
@@ -117,7 +117,6 @@ namespace Presentation.Controllers
             var tokenString = GenerateJwtToken(authResponse, request.Email);
             authResponse.Token = tokenString;
 
-            // Retornamos el objeto AuthResponse COMPLETO
             return Ok(authResponse);
         }
     }

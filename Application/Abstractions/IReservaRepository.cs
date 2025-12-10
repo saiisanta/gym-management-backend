@@ -8,5 +8,6 @@ namespace Application.Abstractions
         bool ExistsByAlumnoAndFecha(int alumnoId, DateOnly fecha);
         List<Reserva> GetByAlumnoId(int alumnoId);
         List<Reserva> GetByClaseId(int claseId);
+        Reserva? GetByAlumnoYClase(int alumnoId, int claseId);
     }
 }

@@ -1,11 +1,12 @@
 ﻿using Contract.Requests;
 using Contract.Responses;
+using System.Threading.Tasks;
 
-namespace Application.Services
+namespace Application.Abstractions
 {
     public interface IAuthService
     {
-        AuthResponse? Register(RegisterRequest request);
-        AuthResponse? Login(LoginRequest request);
+        Task<AuthResponse?> Register(RegisterRequest request);
+        Task<AuthResponse?> Login(LoginRequest request);
     }
 }

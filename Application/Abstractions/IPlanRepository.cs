@@ -5,5 +5,6 @@ namespace Application.Abstractions
     public interface IPlanRepository : IBaseRepository<Plan>
     {
         bool IsActivo(int planId);
+        Task<string?> GetNombrePlan(int planId);
     }
 }

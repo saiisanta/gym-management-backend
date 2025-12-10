@@ -19,16 +19,24 @@ namespace Presentation.Controllers
 
         [HttpGet]
         [Authorize]
-        public ActionResult<List<ReservaResponse>> Get([FromQuery] int? alumnoId, [FromQuery] int? claseId)
+        public ActionResult<List<ReservaResponse>> Get(
+            [FromQuery] int? alumnoId,
+            [FromQuery] int? claseId
+        )
         {
             if (alumnoId.HasValue)
             {
-                var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+                var userIdClaim = User.FindFirst(
+                    System.Security.Claims.ClaimTypes.NameIdentifier
+                )?.Value;
                 var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
                 if (!isAdmin && userIdClaim != alumnoId.ToString())
                 {
-                    return StatusCode(403, "No tiene permisos para ver las reservas de otro usuario.");
+                    return StatusCode(
+                        403,
+                        "No tiene permisos para ver las reservas de otro usuario."
+                    );
                 }
 
                 var reservas = _reservaService.GetByAlumnoId(alumnoId.Value);
@@ -42,17 +50,10 @@ namespace Presentation.Controllers
 
                 if (isAdmin)
                 {
-                    return Ok(new
-                    {
-                        total = reservas.Count,
-                        reservas = reservas
-                    });
+                    return Ok(new { total = reservas.Count, reservas = reservas });
                 }
 
-                return Ok(new
-                {
-                    total = reservas.Count
-                });
+                return Ok(new { total = reservas.Count });
             }
 
             return BadRequest("Debe especificar alumnoId o claseId");
@@ -60,35 +61,37 @@ namespace Presentation.Controllers
 
         [HttpPost]
         [Authorize]
-        public ActionResult<bool> Create(CreateReservaRequest request)
+        public ActionResult<ReservaResponse> Create(CreateReservaRequest request)
         {
             if (request == null)
-            {
                 return BadRequest("La solicitud no puede ser nula.");
-            }
 
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != request.AlumnoId.ToString())
-            {
                 return StatusCode(403, "No tiene permisos para crear reservas para otro usuario.");
-            }
 
-            var resultado = _reservaService.Create(request);
-            if (!resultado)
+            try
             {
-                return BadRequest("No se pudo crear la reserva. Verifique que el alumno y la clase existan, y que no haya una reserva duplicada.");
-            }
+                var reserva = _reservaService.Create(request);
+                if (reserva == null)
+                    return BadRequest("No se pudo crear la reserva.");
 
-            return Ok(true);
+                return Ok(reserva);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ex.Message); // mensaje: "La clase está llena."
+            }
         }
 
         [HttpPatch("{id}")]
         [Authorize]
         public IActionResult Update(int id, [FromBody] dynamic request)
         {
-            // Para compatibilidad con frontend, acepta PATCH aunque no se implemente aún
             return StatusCode(501, "Actualización de reservas no implementada aún");
         }
 
@@ -96,7 +99,9 @@ namespace Presentation.Controllers
         [Authorize]
         public IActionResult Delete(int id)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             var alumnoIdReserva = _reservaService.GetAlumnoIdByReservaId(id);
@@ -111,7 +116,8 @@ namespace Presentation.Controllers
             }
 
             var resultado = _reservaService.Delete(id);
-            if (!resultado) return NotFound("Reserva no encontrada.");
+            if (!resultado)
+                return NotFound("Reserva no encontrada.");
 
             return Ok(new { message = "Reserva cancelada exitosamente." });
         }

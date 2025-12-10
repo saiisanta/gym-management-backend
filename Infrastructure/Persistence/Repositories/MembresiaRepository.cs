@@ -13,6 +13,12 @@ namespace Infrastructure.Persistence.Repositories
             _context = context;
         }
 
+        public string? GetNombrePlan(int planId)
+        {
+            var plan = _context.Planes.FirstOrDefault(p => p.Id == planId);
+            return plan?.Nombre;
+        }
+
         public bool TieneMembresiaActiva(int alumnoId)
         {
             return _context.Membresias.Any(m =>

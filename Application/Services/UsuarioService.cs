@@ -1,5 +1,6 @@
 using Application.Abstractions;
 using Contract.Requests;
+using Contract.Responses;
 using Domain.Entities;
 
 namespace Application.Services
@@ -9,7 +10,10 @@ namespace Application.Services
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMembresiaRepository _membresiaRepository;
 
-        public UsuarioService(IUsuarioRepository usuarioRepository, IMembresiaRepository membresiaRepository)
+        public UsuarioService(
+            IUsuarioRepository usuarioRepository,
+            IMembresiaRepository membresiaRepository
+        )
         {
             _usuarioRepository = usuarioRepository;
             _membresiaRepository = membresiaRepository;
@@ -43,7 +47,8 @@ namespace Application.Services
         public bool Desactivar(int id)
         {
             var usuario = _usuarioRepository.GetById(id);
-            if (usuario == null) return false;
+            if (usuario == null)
+                return false;
 
             usuario.Activo = false;
             return _usuarioRepository.Update(usuario);
@@ -85,16 +90,22 @@ namespace Application.Services
             return usuarios;
         }
 
-        public (List<Contract.Responses.UsuarioResponse> Items, int Total) GetPagedDtos(int page, int pageSize, string? q = null)
+        public (List<Contract.Responses.UsuarioResponse> Items, int Total) GetPagedDtos(
+            int page,
+            int pageSize,
+            string? q = null
+        )
         {
             return _usuarioRepository.GetPagedDtos(page, pageSize, q);
         }
 
         public bool Create(RegisterRequest request)
         {
-            if (request == null ||
-                string.IsNullOrWhiteSpace(request.Email) ||
-                string.IsNullOrWhiteSpace(request.Password))
+            if (
+                request == null
+                || string.IsNullOrWhiteSpace(request.Email)
+                || string.IsNullOrWhiteSpace(request.Password)
+            )
             {
                 return false;
             }
@@ -109,11 +120,13 @@ namespace Application.Services
             return false;
         }
 
-        public bool Update(int id, UpdateUsuarioRequest request)
+        public UsuarioResponse? Update(int id, UpdateUsuarioRequest request)
         {
             var usuario = _usuarioRepository.GetById(id);
-            if (usuario == null) return false;
+            if (usuario == null)
+                return null;
 
+            // Aplicar cambios
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 usuario.Nombre = request.Nombre;
 
@@ -125,8 +138,12 @@ namespace Application.Services
 
             if (!string.IsNullOrWhiteSpace(request.Email))
             {
-                if (request.Email != usuario.Email && _usuarioRepository.ExistsByEmail(request.Email))
-                    return false;
+                if (
+                    request.Email != usuario.Email
+                    && _usuarioRepository.ExistsByEmail(request.Email)
+                )
+                    return null;
+
                 usuario.Email = request.Email;
             }
 
@@ -145,7 +162,32 @@ namespace Application.Services
             if (request.SucursalId.HasValue)
                 usuario.SucursalId = request.SucursalId.Value;
 
-            return _usuarioRepository.Update(usuario);
+            var updated = _usuarioRepository.Update(usuario);
+            if (!updated)
+                return null;
+
+            // DTO CORRECTO
+            return new UsuarioResponse
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Lastname = usuario.Apellido,
+                Email = usuario.Email,
+                Role = usuario.Role,
+                RoleId = 0,
+                TelNumber = usuario.Telefono,
+                Dni = usuario.Dni,
+                Genero = usuario.Genero,
+                FechaNacimiento = usuario.FechaNacimiento.ToString("yyyy-MM-dd"),
+                Direccion = usuario.Direccion,
+                Estado = usuario.Activo ? "activo" : "inactivo",
+                Plan = usuario.PlanId.HasValue
+                    ? _membresiaRepository.GetNombrePlan(usuario.PlanId.Value)
+                    : null,
+
+                SucursalId = usuario.SucursalId,
+                Image = usuario.Image,
+            };
         }
     }
 }

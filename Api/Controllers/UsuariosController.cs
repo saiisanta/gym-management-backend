@@ -19,7 +19,10 @@ namespace Presentation.Controllers
 
         [HttpGet]
         [Authorize(Policy = "AdminPolicy")]
-        public ActionResult<List<UsuarioResponse>> GetAll([FromQuery] int? roleId, [FromQuery] int? sucursalId)
+        public ActionResult<List<UsuarioResponse>> GetAll(
+            [FromQuery] int? roleId,
+            [FromQuery] int? sucursalId
+        )
         {
             var items = _usuarioService.GetAllDtos(roleId, sucursalId);
             return Ok(items);
@@ -30,9 +33,12 @@ namespace Presentation.Controllers
         public ActionResult<UsuarioResponse> GetById(int id)
         {
             var usuario = _usuarioService.GetDtoById(id);
-            if (usuario == null) return NotFound();
+            if (usuario == null)
+                return NotFound();
 
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != id.ToString())
@@ -48,7 +54,8 @@ namespace Presentation.Controllers
         public ActionResult<UsuarioResponse> GetByEmail([FromQuery] string email)
         {
             var usuario = _usuarioService.GetDtoByEmail(email);
-            if (usuario == null) return NotFound();
+            if (usuario == null)
+                return NotFound();
             return Ok(usuario);
         }
 
@@ -59,7 +66,10 @@ namespace Presentation.Controllers
             if (request == null)
                 return BadRequest("La solicitud no puede estar vacía.");
 
-            if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.Password))
+            if (
+                string.IsNullOrWhiteSpace(request.Email)
+                || string.IsNullOrWhiteSpace(request.Password)
+            )
                 return BadRequest("Email y contraseña son obligatorios.");
 
             var resultado = _usuarioService.Create(request);
@@ -73,7 +83,9 @@ namespace Presentation.Controllers
         [Authorize]
         public IActionResult Update(int id, [FromBody] UpdateUsuarioRequest request)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != id.ToString())
@@ -84,11 +96,13 @@ namespace Presentation.Controllers
             if (request == null)
                 return BadRequest("La solicitud no puede ser nula.");
 
-            var resultado = _usuarioService.Update(id, request);
-            if (!resultado)
+            var usuarioActualizado = _usuarioService.Update(id, request);
+            if (usuarioActualizado == null)
                 return BadRequest("No se pudo actualizar el usuario. Verifique los datos.");
 
-            return Ok(new { message = "Usuario actualizado exitosamente." });
+            return Ok(
+                new { message = "Usuario actualizado exitosamente.", usuario = usuarioActualizado }
+            );
         }
 
         [HttpDelete("{id}")]
@@ -96,7 +110,8 @@ namespace Presentation.Controllers
         public IActionResult Desactivar(int id)
         {
             var resultado = _usuarioService.Desactivar(id);
-            if (!resultado) return NotFound("Usuario no encontrado.");
+            if (!resultado)
+                return NotFound("Usuario no encontrado.");
 
             return Ok(new { message = "Usuario desactivado exitosamente." });
         }

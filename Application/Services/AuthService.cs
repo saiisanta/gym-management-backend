@@ -1,9 +1,10 @@
-﻿using Application.Abstractions;
+﻿using System;
+using System.Security.Cryptography;
+using System.Threading.Tasks;
+using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
-using System.Security.Cryptography;
-using System;
 
 namespace Application.Services
 {
@@ -22,7 +23,8 @@ namespace Application.Services
             IMembresiaService membresiaService,
             IPlanRepository planRepository,
             IUsuarioService usuarioService,
-            IUsuarioRepository usuarioRepository)
+            IUsuarioRepository usuarioRepository
+        )
         {
             _alumnoRepository = alumnoRepository;
             _profesorRepository = profesorRepository;
@@ -34,22 +36,17 @@ namespace Application.Services
 
         private DateTime? DateOnlyToNullableDateTime(DateOnly dateOnly)
         {
-            if (dateOnly == default(DateOnly))
-            {
-                return null;
-            }
+            if (dateOnly == default) return null;
             return dateOnly.ToDateTime(TimeOnly.MinValue);
         }
 
-        public AuthResponse? Register(RegisterRequest request)
+        // ====================== REGISTER ================================
+        public async Task<AuthResponse?> Register(RegisterRequest request)
         {
             if (request.Role == "Alumno")
             {
-                if (!_planRepository.IsActivo(request.PlanId))
-                    return null;
-
-                if (_usuarioService.ExistsByEmail(request.Email))
-                    return null;
+                if (!_planRepository.IsActivo(request.PlanId)) return null;
+                if (_usuarioService.ExistsByEmail(request.Email)) return null;
 
                 var alumno = new Alumno
                 {
@@ -62,10 +59,10 @@ namespace Application.Services
                     Activo = true,
                     PasswordHash = HashPassword(request.Password),
                     Role = "Alumno",
-                    SucursalId = request.SucursalId, 
-                    Direccion = request.Direccion, 
-                    Genero = request.Genero, 
-                    Image = request.Image
+                    SucursalId = request.SucursalId,
+                    Direccion = request.Direccion,
+                    Genero = request.Genero,
+                    Image = request.Image,
                 };
 
                 if (!_alumnoRepository.Create(alumno)) return null;
@@ -73,11 +70,12 @@ namespace Application.Services
                 var membresiaRequest = new CreateMembresiaRequest
                 {
                     AlumnoId = alumno.Id,
-                    PlanId = request.PlanId
+                    PlanId = request.PlanId,
                 };
 
-                if (!_membresiaService.AsociarMembresia(membresiaRequest))
-                    return null;
+                if (!_membresiaService.AsociarMembresia(membresiaRequest)) return null;
+
+                var nombrePlan = await _planRepository.GetNombrePlan(request.PlanId);
 
                 return new AuthResponse
                 {
@@ -93,13 +91,13 @@ namespace Application.Services
                     Genero = alumno.Genero,
                     SucursalId = alumno.SucursalId,
                     Image = alumno.Image,
-                    Plan = request.PlanId 
+                    PlanId = request.PlanId,
+                    PlanName = nombrePlan ?? "Sin plan"
                 };
             }
             else if (request.Role == "Profesor")
             {
-                if (_usuarioService.ExistsByEmail(request.Email))
-                    return null;
+                if (_usuarioService.ExistsByEmail(request.Email)) return null;
 
                 var profesor = new Profesor
                 {
@@ -114,7 +112,7 @@ namespace Application.Services
                     SucursalId = request.SucursalId,
                     Direccion = request.Direccion,
                     Genero = request.Genero,
-                    Image = request.Image
+                    Image = request.Image,
                 };
 
                 if (!_profesorRepository.Create(profesor)) return null;
@@ -133,23 +131,19 @@ namespace Application.Services
                     Genero = profesor.Genero,
                     SucursalId = profesor.SucursalId,
                     Image = profesor.Image,
-                    Plan = null 
+                    PlanName = "Sin plan"
                 };
             }
 
             return null;
         }
 
-        public AuthResponse? Login(LoginRequest request)
+        // ====================== LOGIN ================================
+        public async Task<AuthResponse?> Login(LoginRequest request)
         {
             var usuario = _usuarioService.GetWithPasswordByEmail(request.Email);
-            if (usuario == null)
-                return null;
-
-            if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
-            {
-                return null;
-            }
+            if (usuario == null) return null;
+            if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow) return null;
 
             if (VerifyPassword(request.Password, usuario.PasswordHash))
             {
@@ -159,6 +153,10 @@ namespace Application.Services
                     usuario.LockoutEnd = null;
                     _usuarioRepository.Update(usuario);
                 }
+
+                string? planNombre = null;
+                if (usuario.PlanId.HasValue)
+                    planNombre = await _planRepository.GetNombrePlan(usuario.PlanId.Value);
 
                 return new AuthResponse
                 {
@@ -173,31 +171,28 @@ namespace Application.Services
                     FechaNacimiento = DateOnlyToNullableDateTime(usuario.FechaNacimiento),
                     Direccion = usuario.Direccion,
                     Estado = usuario.Activo ? "Activo" : "Inactivo",
-                    Plan = usuario.PlanId,
-                    SucursalId = usuario.SucursalId, 
+                    PlanId = usuario.PlanId,
+                    PlanName = planNombre ?? "Sin plan",
+                    SucursalId = usuario.SucursalId,
                     Image = usuario.Image
                 };
             }
 
             usuario.FailedLoginAttempts++;
-
             if (usuario.FailedLoginAttempts >= 3)
-            {
                 usuario.LockoutEnd = DateTime.UtcNow.AddMinutes(15);
-            }
 
             _usuarioRepository.Update(usuario);
 
             return null;
         }
 
+        // ================================================================
         private string HashPassword(string password)
         {
             byte[] salt = new byte[16];
             using (var rng = RandomNumberGenerator.Create())
-            {
                 rng.GetBytes(salt);
-            }
 
             var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
             byte[] hash = pbkdf2.GetBytes(32);
@@ -212,7 +207,6 @@ namespace Application.Services
         private bool VerifyPassword(string password, string hash)
         {
             byte[] hashBytes = Convert.FromBase64String(hash);
-
             byte[] salt = new byte[16];
             Array.Copy(hashBytes, 0, salt, 0, 16);
 
@@ -220,10 +214,8 @@ namespace Application.Services
             byte[] testHash = pbkdf2.GetBytes(32);
 
             for (int i = 0; i < 32; i++)
-            {
                 if (hashBytes[i + 16] != testHash[i])
                     return false;
-            }
 
             return true;
         }

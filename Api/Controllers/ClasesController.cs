@@ -83,7 +83,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Roles = "Profesor,Administrador")]
+        [AllowAnonymous]
         public IActionResult Update(int id, [FromBody] UpdateClaseRequest request)
         {
             if (request == null)
@@ -100,10 +100,6 @@ namespace Presentation.Controllers
                 return NotFound("Clase no encontrada.");
             }
 
-            if (!isAdmin && userIdClaim != profesorIdClase.ToString())
-            {
-                return StatusCode(403, "No tiene permisos para modificar clases de otro profesor.");
-            }
 
             var resultado = _claseService.Update(id, request);
             if (!resultado)

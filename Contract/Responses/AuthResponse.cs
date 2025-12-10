@@ -14,7 +14,11 @@
         public DateTime? FechaNacimiento { get; set; }
         public string Direccion { get; set; }
         public string Estado { get; set; }
+
+        public int? PlanId { get; set; }
+        public string PlanName { get; set; }
         public int? Plan { get; set; }
+
         public int? SucursalId { get; set; }
         public string Image { get; set; }
     }

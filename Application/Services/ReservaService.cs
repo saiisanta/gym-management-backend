@@ -9,93 +9,103 @@ namespace Application.Services
     {
         private readonly IReservaRepository _reservaRepository;
         private readonly IAlumnoRepository _alumnoRepository;
-        private readonly IUsuarioRepository _usuarioRepository;
         private readonly IClaseRepository _claseRepository;
-        private readonly INotificacionService _notificacionService;
+
         public ReservaService(
             IReservaRepository reservaRepository,
             IAlumnoRepository alumnoRepository,
-            IUsuarioRepository usuarioRepository,
-            IClaseRepository claseRepository,
-            INotificacionService notificacionService)
+            IClaseRepository claseRepository
+        )
         {
             _reservaRepository = reservaRepository;
             _alumnoRepository = alumnoRepository;
-            _usuarioRepository = usuarioRepository;
             _claseRepository = claseRepository;
-            _notificacionService = notificacionService;
         }
 
-        public bool Create(CreateReservaRequest request)
+        public ReservaResponse? Create(CreateReservaRequest request)
         {
-            if (request == null || request.AlumnoId <= 0 || request.ClaseId <= 0)
-                return false;
+            // Validar alumno
+            var alumno = _alumnoRepository.GetById(request.AlumnoId);
+            if (alumno == null)
+                return null;
 
-            if (!_usuarioRepository.IsActivo(request.AlumnoId))
-                return false;
-
-            if (!_usuarioRepository.HasMembresiaActiva(request.AlumnoId))
-                return false;
-
+            // Validar clase
             var clase = _claseRepository.GetById(request.ClaseId);
-            if (clase == null || !clase.Activa || clase.Fecha < DateOnly.FromDateTime(DateTime.Today))
-                return false;
+            if (clase == null)
+                return null;
 
-            if (_reservaRepository.ExistsByAlumnoAndFecha(request.AlumnoId, clase.Fecha))
-                return false;
+            // VALIDAR CUPO DISPONIBLE
+            var reservasExistentes = _reservaRepository.GetByClaseId(request.ClaseId);
+            var cuposUsados = reservasExistentes.Count;
+            var cupoMaximo = clase.Capacidad;
 
-            if (_reservaRepository.ExistsByAlumnoAndClase(request.AlumnoId, request.ClaseId))
-                return false;
+            if (cuposUsados >= cupoMaximo)
+            {
+                throw new InvalidOperationException("La clase está llena.");
+            }
 
-            var reservasActuales = _reservaRepository.GetByClaseId(clase.Id).Count;
-            if (reservasActuales >= clase.Capacidad)
-                return false;
+            // Validar reserva duplicada
+            var reservaExistente = _reservaRepository.GetByAlumnoYClase(
+                request.AlumnoId,
+                request.ClaseId
+            );
+            if (reservaExistente != null)
+                return null;
+
+            var hoy = DateOnly.FromDateTime(DateTime.UtcNow);
 
             var nuevaReserva = new Reserva
             {
                 AlumnoId = request.AlumnoId,
                 ClaseId = request.ClaseId,
-                FechaReserva = DateOnly.FromDateTime(DateTime.Today),
-                Activo = true
+                FechaReserva = hoy,
+                Activo = true,
             };
 
-            if (!_reservaRepository.Create(nuevaReserva))
-                return false;
+            _reservaRepository.Create(nuevaReserva);
 
-            _notificacionService.NotificarReservaConfirmada(request.AlumnoId, request.ClaseId);
-
-            if (clase != null)
+            return new ReservaResponse
             {
-                _notificacionService.NotificarNuevaReservaAlProfesor(clase.ProfesorId, request.AlumnoId, request.ClaseId);
-            }
-
-            return true;
+                Id = nuevaReserva.Id,
+                AlumnoId = nuevaReserva.AlumnoId,
+                ClaseId = nuevaReserva.ClaseId,
+                FechaReserva = hoy.ToString("yyyy-MM-dd"),
+                CreatedAt = DateTime.UtcNow.ToString("o"),
+                Estado = "confirmada",
+                Activo = nuevaReserva.Activo,
+            };
         }
 
         public List<ReservaResponse> GetByAlumnoId(int alumnoId)
         {
             var reservas = _reservaRepository.GetByAlumnoId(alumnoId);
-            return reservas.Select(reserva => new ReservaResponse
-            {
-                Id = reserva.Id,
-                AlumnoId = reserva.AlumnoId,
-                ClaseId = reserva.ClaseId,
-                FechaReserva = reserva.FechaReserva.ToString("yyyy-MM-dd"),
-                Activo = reserva.Activo
-            }).ToList();
+
+            return reservas
+                .Select(r => new ReservaResponse
+                {
+                    Id = r.Id,
+                    AlumnoId = r.AlumnoId,
+                    ClaseId = r.ClaseId,
+                    FechaReserva = r.FechaReserva.ToString("yyyy-MM-dd"),
+                    Activo = r.Activo,
+                })
+                .ToList();
         }
 
         public List<ReservaResponse> GetByClaseId(int claseId)
         {
             var reservas = _reservaRepository.GetByClaseId(claseId);
-            return reservas.Select(reserva => new ReservaResponse
-            {
-                Id = reserva.Id,
-                AlumnoId = reserva.AlumnoId,
-                ClaseId = reserva.ClaseId,
-                FechaReserva = reserva.FechaReserva.ToString("yyyy-MM-dd"),
-                Activo = reserva.Activo
-            }).ToList();
+
+            return reservas
+                .Select(r => new ReservaResponse
+                {
+                    Id = r.Id,
+                    AlumnoId = r.AlumnoId,
+                    ClaseId = r.ClaseId,
+                    FechaReserva = r.FechaReserva.ToString("yyyy-MM-dd"),
+                    Activo = r.Activo,
+                })
+                .ToList();
         }
 
         public int? GetAlumnoIdByReservaId(int reservaId)
@@ -107,7 +117,8 @@ namespace Application.Services
         public bool Delete(int id)
         {
             var reserva = _reservaRepository.GetById(id);
-            if (reserva == null) return false;
+            if (reserva == null)
+                return false;
 
             return _reservaRepository.Delete(reserva);
         }

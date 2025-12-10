@@ -24,5 +24,7 @@ namespace Domain.Entities
         public DateTime? LockoutEnd { get; set; }
 
         public Sucursal? Sucursal { get; set; }
+
+        public Plan? Plan { get; set; }
     }
 }
