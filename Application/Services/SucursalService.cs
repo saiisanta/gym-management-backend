@@ -17,35 +17,44 @@ namespace Application.Services
         public List<SucursalResponse> GetAll()
         {
             var sucursales = _sucursalRepository.GetAll();
-            return sucursales.Select(s => new SucursalResponse
-            {
-                Id = s.Id,
-                Nombre = s.Nombre,
-                Direccion = s.Direccion,
-                Telefono = s.Telefono,
-                Email = s.Email,
-                Activa = s.Activa
-            }).ToList();
+
+            return sucursales
+                .Select(s => new SucursalResponse
+                {
+                    Id = s.Id,
+                    Nombre = s.Nombre,
+                    Direccion = s.Direccion,
+                    Telefono = s.Telefono,
+                    Email = s.Email,
+                    Activa = s.Activa,
+                    Salas = _sucursalRepository.GetCantidadSalas(s.Id)
+                })
+                .ToList();
         }
 
         public List<SucursalResponse> GetActivas()
         {
             var sucursales = _sucursalRepository.GetActivas();
-            return sucursales.Select(s => new SucursalResponse
-            {
-                Id = s.Id,
-                Nombre = s.Nombre,
-                Direccion = s.Direccion,
-                Telefono = s.Telefono,
-                Email = s.Email,
-                Activa = s.Activa
-            }).ToList();
+
+            return sucursales
+                .Select(s => new SucursalResponse
+                {
+                    Id = s.Id,
+                    Nombre = s.Nombre,
+                    Direccion = s.Direccion,
+                    Telefono = s.Telefono,
+                    Email = s.Email,
+                    Activa = s.Activa,
+                    Salas = _sucursalRepository.GetCantidadSalas(s.Id)
+                })
+                .ToList();
         }
 
         public SucursalResponse? GetById(int id)
         {
             var sucursal = _sucursalRepository.GetById(id);
-            if (sucursal == null) return null;
+            if (sucursal == null)
+                return null;
 
             return new SucursalResponse
             {
@@ -54,7 +63,8 @@ namespace Application.Services
                 Direccion = sucursal.Direccion,
                 Telefono = sucursal.Telefono,
                 Email = sucursal.Email,
-                Activa = sucursal.Activa
+                Activa = sucursal.Activa,
+                Salas = _sucursalRepository.GetCantidadSalas(sucursal.Id)
             };
         }
 
@@ -75,7 +85,8 @@ namespace Application.Services
         public bool Update(int id, UpdateSucursalRequest request)
         {
             var sucursal = _sucursalRepository.GetById(id);
-            if (sucursal == null) return false;
+            if (sucursal == null)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 sucursal.Nombre = request.Nombre;
@@ -95,7 +106,8 @@ namespace Application.Services
         public bool Desactivar(int id)
         {
             var sucursal = _sucursalRepository.GetById(id);
-            if (sucursal == null) return false;
+            if (sucursal == null)
+                return false;
 
             sucursal.Activa = false;
             return _sucursalRepository.Update(sucursal);

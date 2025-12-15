@@ -1,4 +1,7 @@
-﻿using Application.Abstractions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
@@ -10,7 +13,10 @@ namespace Application.Services
         private readonly IProfesorRepository _profesorRepository;
         private readonly IUsuarioService _usuarioService;
 
-        public ProfesorService(IProfesorRepository profesorRepository, IUsuarioService usuarioService)
+        public ProfesorService(
+            IProfesorRepository profesorRepository,
+            IUsuarioService usuarioService
+        )
         {
             _profesorRepository = profesorRepository;
             _usuarioService = usuarioService;
@@ -18,14 +24,18 @@ namespace Application.Services
 
         public List<ProfesorResponse> GetAll()
         {
-            var profesores = _profesorRepository.GetAll();
+            var profesores = _profesorRepository
+                .GetAll()
+                .Where(p => p.Activo == true) // Solo activos
+                .ToList();
             return profesores.Select(MapToProfesorResponse).ToList();
         }
 
         public List<ProfesorResponse> GetBySucursalId(int sucursalId)
         {
-            var profesores = _profesorRepository.GetAll()
-                .Where(p => p.SucursalId == sucursalId)
+            var profesores = _profesorRepository
+                .GetAll()
+                .Where(p => p.SucursalId == sucursalId && p.Activo == true) // Por sucursal y activos
                 .ToList();
             return profesores.Select(MapToProfesorResponse).ToList();
         }
@@ -33,26 +43,30 @@ namespace Application.Services
         public ProfesorResponse? GetById(int id)
         {
             var profesor = _profesorRepository.GetById(id);
-            if (profesor == null) return null;
+            if (profesor == null)
+                return null;
 
             return MapToProfesorResponse(profesor);
         }
 
-        public bool Create(CreateProfesorRequest request)
+        public ProfesorResponse? Create(CreateProfesorRequest request)
         {
-            if (request == null ||
-                string.IsNullOrWhiteSpace(request.Nombre) ||
-                string.IsNullOrWhiteSpace(request.Apellido) ||
-                string.IsNullOrWhiteSpace(request.Email))
+            if (
+                request == null
+                || string.IsNullOrWhiteSpace(request.Nombre)
+                || string.IsNullOrWhiteSpace(request.Apellido)
+                || string.IsNullOrWhiteSpace(request.Email)
+            )
             {
-                return false;
+                return null; // Validación de datos de entrada
             }
 
             if (_usuarioService.ExistsByEmail(request.Email))
             {
-                return false;
+                return null; // Email ya existe
             }
 
+            // Asignación de valores para propiedades obligatorias en la Entity base (Usuario.cs)
             var nuevoProfesor = new Profesor
             {
                 Nombre = request.Nombre,
@@ -60,16 +74,44 @@ namespace Application.Services
                 Dni = request.Dni,
                 Email = request.Email,
                 Telefono = request.Telefono,
-                Activo = true
+                Activo = true,
+
+                // CORRECCIONES CLAVE PARA EVITAR DbUpdateException (NOT NULL):
+
+                // 1. PasswordHash es obligatorio en Usuario
+                // Usamos un valor temporal (en producción, usaría una función de hashing)
+                PasswordHash = "TEMPORARY_HASH_TO_FIX_DB_ERROR",
+
+                // 2. Aseguramos el rol, crucial para el mapeo TPH/TPC
+                Role = "Profesor",
+
+                // 3. Clave Foránea obligatoria
+                SucursalId = request.SucursalId,
+
+                // 4. FechaNacimiento obligatoria (establecemos la fecha actual por defecto)
+                FechaNacimiento = DateOnly.FromDateTime(DateTime.Now),
+
+                // 5. Campos nullable por defecto (si la DB los requiere o son nullable)
+                Genero = "N/A",
+                Direccion = "N/A",
+                Especialidad = request.Especialidad,
             };
 
-            return _profesorRepository.Create(nuevoProfesor);
+            // Intentamos la creación
+            if (_profesorRepository.Create(nuevoProfesor))
+            {
+                // Devolvemos el objeto recién creado con el ID
+                return MapToProfesorResponse(nuevoProfesor);
+            }
+
+            return null; // Fallo en la inserción de la base de datos (Ej: SucursalId no existe)
         }
 
         public bool Update(int id, UpdateProfesorRequest request)
         {
             var profesor = _profesorRepository.GetById(id);
-            if (profesor == null) return false;
+            if (profesor == null)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 profesor.Nombre = request.Nombre;
@@ -102,9 +144,10 @@ namespace Application.Services
         public bool Delete(int id)
         {
             var profesor = _profesorRepository.GetById(id);
-            if (profesor == null) return false;
+            if (profesor == null)
+                return false;
 
-            // Desactivar en lugar de eliminar
+            // Soft-Delete
             profesor.Activo = false;
             return _profesorRepository.Update(profesor);
         }
@@ -122,7 +165,7 @@ namespace Application.Services
                 Telefono = profesor.Telefono,
                 FechaNacimiento = profesor.FechaNacimiento,
                 SucursalId = profesor.SucursalId,
-                Activo = profesor.Activo
+                Activo = profesor.Activo,
             };
         }
     }

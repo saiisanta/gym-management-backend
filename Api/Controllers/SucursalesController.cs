@@ -57,7 +57,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous]
         public IActionResult Update(int id, [FromBody] UpdateSucursalRequest request)
         {
             var resultado = _sucursalService.Update(id, request);

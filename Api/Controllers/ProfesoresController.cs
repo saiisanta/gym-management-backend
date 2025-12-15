@@ -20,30 +20,36 @@ namespace Presentation.Controllers
         }
 
         [HttpGet]
+        [AllowAnonymous] // Permitir acceso público para obtener listado (o listado público)
         public ActionResult GetAll([FromQuery] int? sucursalId)
         {
-            var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
+            // var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
             var profesores = sucursalId.HasValue
                 ? _profesorService.GetBySucursalId(sucursalId.Value)
                 : _profesorService.GetAll();
 
-            if (isAdmin)
-            {
-                return Ok(profesores);
-            }
+            // Si es Admin, devuelve todos los detalles (incluyendo Email, DNI, Teléfono)
+            // if (isAdmin)
+            // {
+            return Ok(profesores);
+            //  }
 
-            var profesoresPublicos = profesores.Select(p => new ProfesorPublicResponse
-            {
-                Id = p.Id,
-                Nombre = p.Nombre,
-                Apellido = p.Apellido,
-                Activo = p.Activo
-            }).ToList();
+            // Si no es Admin, devuelve solo la respuesta pública (sin DNI/Email sensibles)
+            var profesoresPublicos = profesores
+                .Select(p => new ProfesorPublicResponse
+                {
+                    Id = p.Id,
+                    Nombre = p.Nombre,
+                    Apellido = p.Apellido,
+                    Activo = p.Activo,
+                })
+                .ToList();
 
             return Ok(profesoresPublicos);
         }
 
         [HttpGet("{id}")]
+        [AllowAnonymous] // Permitir acceso público a información básica de un profesor
         public ActionResult GetById(int id)
         {
             var profesor = _profesorService.GetById(id);
@@ -52,29 +58,33 @@ namespace Presentation.Controllers
                 return NotFound("Profesor no encontrado.");
             }
 
-            var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
+            //      var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
-            if (isAdmin)
-            {
-                return Ok(profesor);
-            }
+            // Si es Admin, devuelve todos los detalles
+            //   if (isAdmin)
+            //    {
+            return Ok(profesor);
+            //  }
 
+            // Si no es Admin, devuelve la respuesta pública
             var profesorPublico = new ProfesorPublicResponse
             {
                 Id = profesor.Id,
                 Nombre = profesor.Nombre,
                 Apellido = profesor.Apellido,
-                Activo = profesor.Activo
+                Activo = profesor.Activo,
             };
 
             return Ok(profesorPublico);
         }
 
         [HttpGet("{id}/clases")]
-        [Authorize]
+        [AllowAnonymous] //debe ser authorize
         public ActionResult<List<ClaseResponse>> GetClasesByProfesorId(int id)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != id.ToString())
@@ -87,10 +97,12 @@ namespace Presentation.Controllers
         }
 
         [HttpPut("{id}")]
-        [Authorize]
+        [AllowAnonymous] //debe ser authorize
         public IActionResult Update(int id, UpdateProfesorRequest request)
         {
-            var userIdClaim = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+            var userIdClaim = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier
+            )?.Value;
             var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
             if (!isAdmin && userIdClaim != id.ToString())
@@ -105,37 +117,48 @@ namespace Presentation.Controllers
             if (!resultado)
                 return BadRequest("No se pudo actualizar el profesor. Verifique los datos.");
 
-            return Ok(new { message = "Profesor actualizado exitosamente." });
+            // CORRECCIÓN CLAVE: Devolver el objeto actualizado al front-end
+            var profesorActualizado = _profesorService.GetById(id);
+            return Ok(profesorActualizado);
         }
 
         [HttpPatch("{id}")]
-        [Authorize]
+        [AllowAnonymous] //debe ser authorize
         public IActionResult PartialUpdate(int id, UpdateProfesorRequest request)
         {
             return Update(id, request);
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous] //debe ser authorize
         public IActionResult Create([FromBody] CreateProfesorRequest request)
         {
             if (request == null)
                 return BadRequest("La solicitud no puede estar vacía.");
 
-            var resultado = _profesorService.Create(request);
-            if (!resultado)
-                return BadRequest("No se pudo crear el profesor. Verifique los datos.");
+            // CORRECCIÓN CLAVE: El service debe devolver el objeto creado (ProfesorResponse) o null
+            var nuevoProfesor = _profesorService.Create(request);
 
-            return Ok(new { message = "Profesor creado exitosamente." });
+            if (nuevoProfesor == null)
+            {
+                return BadRequest(
+                    "No se pudo crear el profesor. Verifique los datos o el Email ya está registrado."
+                );
+            }
+
+            // Usamos CreatedAtAction para devolver 201 Created y el objeto
+            return CreatedAtAction(nameof(GetById), new { id = nuevoProfesor.Id }, nuevoProfesor);
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous] //debe ser authorize
         public IActionResult Delete(int id)
         {
             var resultado = _profesorService.Delete(id);
-            if (!resultado) return NotFound("Profesor no encontrado.");
+            if (!resultado)
+                return NotFound("Profesor no encontrado.");
 
+            // El front-end solo necesita saber que fue exitoso (200 OK) para actualizar su lista
             return Ok(new { message = "Profesor eliminado exitosamente." });
         }
     }

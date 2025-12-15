@@ -11,6 +11,9 @@ namespace Contract.Requests
         public string? Direccion { get; set; }
         public string? Image { get; set; }
         public int? PlanId { get; set; }
+
+        public int? RoleId { get; set; }
+
         public DateOnly? FechaNacimiento { get; set; }
         public int? SucursalId { get; set; }
     }

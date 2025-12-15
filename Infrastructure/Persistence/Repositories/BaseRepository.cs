@@ -7,7 +7,7 @@ namespace Infrastructure.Persistence.Repositories
 {
     public abstract class BaseRepository<T> : IBaseRepository<T> where T : BaseEntity
     {
-        private readonly GymDbContext _context;
+        protected readonly GymDbContext _context;
         private readonly DbSet<T> _dbSet;
 
         protected BaseRepository(GymDbContext context)

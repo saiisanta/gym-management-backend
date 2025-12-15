@@ -68,11 +68,17 @@ namespace Infrastructure.Persistence.Repositories
                 Role = u.Role,
                 RoleId = u.Role.ToLower() switch
                 {
-                    "administrador" => 1,
-                    "profesor" => 2,
-                    "alumno" => 3,
-                    _ => 0,
+                    "superadministrador" => 1,
+                    "administrador" => 2,
+                    "admin" => 2,
+                    "adminsucursal" => 2,
+                    "recepcionista" => 3,
+                    "alumno" => 4,
+                    "cliente" => 4,
+                    "profesor" => 5,
+                    _ => 4, // fallback a cliente
                 },
+
                 TelNumber = u.Telefono,
                 Dni = u.Dni,
                 Genero = u.Genero,

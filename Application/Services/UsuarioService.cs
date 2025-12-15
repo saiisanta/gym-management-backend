@@ -126,13 +126,31 @@ namespace Application.Services
             if (usuario == null)
                 return null;
 
-            // Aplicar cambios
+            // Mapear RoleId (frontend) -> Role string (DB)
+            if (request.RoleId.HasValue)
+            {
+                usuario.Role = request.RoleId.Value switch
+                {
+                    1 => "SuperAdministrador", // frontend: 1 => superadmin
+                    2 => "Administrador", // frontend: 2 => adminSucursal (ajustá el nombre si tu dominio usa otro)
+                    3 => "Recepcionista", // frontend: 3 => recepcionista
+                    4 => "Alumno", // frontend: 4 => cliente -> en la BD lo representás como "Alumno"
+                    5 => "Profesor", // opcional si necesitás
+                    _ => usuario.Role,
+                };
+            }
+
+            // PlanId: setear o borrar
+            if (request.PlanId.HasValue)
+                usuario.PlanId = request.PlanId.Value;
+            else if (request.PlanId == null)
+                usuario.PlanId = null;
+
+            // Campos comunes
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 usuario.Nombre = request.Nombre;
-
             if (!string.IsNullOrWhiteSpace(request.Apellido))
                 usuario.Apellido = request.Apellido;
-
             if (!string.IsNullOrWhiteSpace(request.Telefono))
                 usuario.Telefono = request.Telefono;
 
@@ -143,22 +161,18 @@ namespace Application.Services
                     && _usuarioRepository.ExistsByEmail(request.Email)
                 )
                     return null;
-
                 usuario.Email = request.Email;
             }
 
             if (!string.IsNullOrWhiteSpace(request.Genero))
                 usuario.Genero = request.Genero;
-
             if (!string.IsNullOrWhiteSpace(request.Direccion))
                 usuario.Direccion = request.Direccion;
-
             if (!string.IsNullOrWhiteSpace(request.Image))
                 usuario.Image = request.Image;
 
             if (request.FechaNacimiento.HasValue)
                 usuario.FechaNacimiento = request.FechaNacimiento.Value;
-
             if (request.SucursalId.HasValue)
                 usuario.SucursalId = request.SucursalId.Value;
 
@@ -166,7 +180,7 @@ namespace Application.Services
             if (!updated)
                 return null;
 
-            // DTO CORRECTO
+            // DTO: devolver RoleId consistente con la convención del frontend
             return new UsuarioResponse
             {
                 Id = usuario.Id,
@@ -174,7 +188,18 @@ namespace Application.Services
                 Lastname = usuario.Apellido,
                 Email = usuario.Email,
                 Role = usuario.Role,
-                RoleId = 0,
+                RoleId = usuario.Role.ToLower() switch
+                {
+                    "superadministrador" => 1,
+                    "administrador" => 2,
+                    "admin" => 2,
+                    "adminsucursal" => 2,
+                    "recepcionista" => 3,
+                    "alumno" => 4,
+                    "cliente" => 4,
+                    "profesor" => 5,
+                    _ => 4, // fallback a "cliente" si el rol es desconocido (mejor que 0)
+                },
                 TelNumber = usuario.Telefono,
                 Dni = usuario.Dni,
                 Genero = usuario.Genero,
@@ -184,7 +209,6 @@ namespace Application.Services
                 Plan = usuario.PlanId.HasValue
                     ? _membresiaRepository.GetNombrePlan(usuario.PlanId.Value)
                     : null,
-
                 SucursalId = usuario.SucursalId,
                 Image = usuario.Image,
             };

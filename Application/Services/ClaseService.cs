@@ -56,9 +56,17 @@ namespace Application.Services
 
                 return _claseRepository.Create(clase);
             }
-            catch
+            catch (Exception ex) // <-- Captura la excepción para ver el detalle.
             {
-                return false;
+                // MUY IMPORTANTE: Loguea el error completo antes de devolver false.
+                // Asumiendo que tienes un logger inyectado o puedes usar Debug.WriteLine
+                // Debug.WriteLine($"Error al crear clase: {ex.Message}");
+                // O mejor, usa ILogger: _logger.LogError(ex, "Error al crear clase");
+
+                // Puedes lanzar una excepción personalizada si quieres que el controlador la maneje.
+                // throw new Exception("Error interno de servicio al crear clase.", ex);
+                Console.WriteLine($"DB Error: {ex.InnerException?.Message ?? ex.Message}");
+                return false; // Error de integridad o desconocido
             }
         }
 

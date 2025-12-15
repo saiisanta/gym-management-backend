@@ -5,5 +5,10 @@ namespace Application.Abstractions
     public interface ISucursalRepository : IBaseRepository<Sucursal>
     {
         List<Sucursal> GetActivas();
+
+
+        int GetCantidadSalas(int sucursalId);
+
+        
     }
 }

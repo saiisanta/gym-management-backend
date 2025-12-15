@@ -7,5 +7,7 @@
         public required string Dni { get; set; }
         public required string Email { get; set; }
         public required string Telefono { get; set; }
+        public required int SucursalId { get; set; }
+        public string? Especialidad { get; set; }
     }
 }

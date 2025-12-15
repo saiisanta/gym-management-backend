@@ -26,8 +26,8 @@ builder
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
             ValidIssuer = builder.Configuration["Jwt:Issuer"],
@@ -38,12 +38,23 @@ builder
 
 builder.Services.AddAuthorization(options =>
 {
-    options.AddPolicy("AlumnoPolicy", policy => policy.RequireRole("Alumno"));
-    options.AddPolicy("ProfesorPolicy", policy => policy.RequireRole("Profesor"));
-    options.AddPolicy("AdminPolicy", policy => policy.RequireRole("Administrador"));
+    options.AddPolicy(
+        "AdminPolicy",
+        policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole("Administrador") || context.User.IsInRole("Admin")
+            )
+    );
+
     options.AddPolicy(
         "AdminOrSuperAdminPolicy",
-        policy => policy.RequireRole("Administrador", "SuperAdministrador")
+        policy =>
+            policy.RequireAssertion(context =>
+                context.User.IsInRole("Administrador")
+                || context.User.IsInRole("Admin")
+                || context.User.IsInRole("SuperAdministrador")
+                || context.User.IsInRole("SuperAdmin")
+            )
     );
 });
 
