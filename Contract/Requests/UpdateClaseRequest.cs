@@ -12,5 +12,9 @@ namespace Contract.Requests
         public List<string>? Dias { get; set; }
         public int? Capacidad { get; set; }
         public bool? MostrarEnHome { get; set; }
+
+        public int? ProfesorId { get; set; }
+        public int? SalaId { get; set; }
+
     }
 }

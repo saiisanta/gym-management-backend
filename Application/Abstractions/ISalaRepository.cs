@@ -5,5 +5,6 @@ namespace Application.Abstractions
     public interface ISalaRepository : IBaseRepository<Sala>
     {
         List<Sala> GetBySucursalId(int sucursalId);
+        bool Delete(int id);
     }
 }

@@ -22,8 +22,8 @@ namespace Application.Services
             string? q = null
         );
         bool Create(RegisterRequest request);
-
-        // 🔥 ESTA ES LA FIRMA CORRECTA
         UsuarioResponse? Update(int id, UpdateUsuarioRequest request);
+
+        bool Delete(int id);
     }
 }

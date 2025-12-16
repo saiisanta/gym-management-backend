@@ -8,5 +8,7 @@ namespace Contract.Requests
         public int? DuracionDias { get; set; }
         public int? MaxReservasPorMes { get; set; }
         public List<string>? TiposPermitidos { get; set; }
+
+        public bool? Activo { get; set; }
     }
 }

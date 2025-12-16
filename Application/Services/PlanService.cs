@@ -1,8 +1,8 @@
-﻿using Application.Abstractions;
+﻿using System.Text.Json;
+using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
-using System.Text.Json;
 
 namespace Application.Services
 {
@@ -24,14 +24,19 @@ namespace Application.Services
         public PlanResponse? GetById(int id)
         {
             var plan = _planRepository.GetById(id);
-            if (plan == null) return null;
+            if (plan == null)
+                return null;
 
             return MapToPlanResponse(plan);
         }
 
         public bool Create(CreatePlanRequest request)
         {
-            if (string.IsNullOrWhiteSpace(request.Nombre) || request.Precio <= 0 || request.DuracionDias <= 0)
+            if (
+                string.IsNullOrWhiteSpace(request.Nombre)
+                || request.Precio <= 0
+                || request.DuracionDias <= 0
+            )
                 return false;
 
             var plan = new Plan
@@ -41,10 +46,11 @@ namespace Application.Services
                 Precio = request.Precio,
                 DuracionDias = request.DuracionDias,
                 MaxReservasPorMes = request.MaxReservasPorMes,
-                TiposPermitidos = request.TiposPermitidos != null && request.TiposPermitidos.Any()
-                    ? JsonSerializer.Serialize(request.TiposPermitidos)
-                    : null,
-                Activo = true
+                TiposPermitidos =
+                    request.TiposPermitidos != null && request.TiposPermitidos.Any()
+                        ? JsonSerializer.Serialize(request.TiposPermitidos)
+                        : null,
+                Activo = true,
             };
 
             return _planRepository.Create(plan);
@@ -53,7 +59,8 @@ namespace Application.Services
         public bool Update(int id, UpdatePlanRequest request)
         {
             var plan = _planRepository.GetById(id);
-            if (plan == null) return false;
+            if (plan == null)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 plan.Nombre = request.Nombre;
@@ -77,13 +84,17 @@ namespace Application.Services
                     : null;
             }
 
+            if (request.Activo.HasValue) // Añadir la lógica para la nueva propiedad
+                plan.Activo = request.Activo.Value;
+
             return _planRepository.Update(plan);
         }
 
         public bool Delete(int id)
         {
             var plan = _planRepository.GetById(id);
-            if (plan == null) return false;
+            if (plan == null)
+                return false;
 
             return _planRepository.Delete(plan);
         }
@@ -114,7 +125,7 @@ namespace Application.Services
                 DuracionMeses = plan.DuracionDias / 30, // Convertir días a meses aproximados
                 Estado = plan.Activo ? "activo" : "inactivo",
                 MaxReservasPorMes = plan.MaxReservasPorMes,
-                TiposPermitidos = tiposPermitidos
+                TiposPermitidos = tiposPermitidos,
             };
         }
     }

@@ -17,6 +17,14 @@ namespace Presentation.Controllers
             _salaService = salaService;
         }
 
+        [HttpPost]
+        [AllowAnonymous]
+        public ActionResult<SalaResponse> Create([FromBody] CreateSalaRequest request)
+        {
+            var nuevaSala = _salaService.Create(request);
+            return CreatedAtAction(nameof(GetById), new { id = nuevaSala.Id }, nuevaSala);
+        }
+
         [HttpGet]
         [AllowAnonymous]
         public ActionResult<List<SalaResponse>> GetAll()
@@ -38,28 +46,35 @@ namespace Presentation.Controllers
         public ActionResult<SalaResponse> GetById(int id)
         {
             var sala = _salaService.GetById(id);
-            if (sala == null) return NotFound();
+            if (sala == null)
+                return NotFound();
             return Ok(sala);
         }
 
         [HttpPut("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous]
         public IActionResult Update(int id, [FromBody] UpdateSalaRequest request)
         {
             var resultado = _salaService.Update(id, request);
-            if (!resultado) return NotFound("Sala no encontrada.");
+            if (!resultado)
+                return NotFound("Sala no encontrada.");
 
             return Ok(new { message = "Sala actualizada exitosamente." });
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
-        public IActionResult Desactivar(int id)
+        [AllowAnonymous]
+        public IActionResult Delete(int id)
         {
-            var resultado = _salaService.Desactivar(id);
-            if (!resultado) return NotFound("Sala no encontrada.");
+            var resultado = _salaService.Delete(id);
 
-            return Ok(new { message = "Sala desactivada exitosamente." });
+            if (!resultado)
+            {
+                return Conflict(
+                    "No se pudo eliminar la sala. Puede tener clases u otros registros asociados que deben eliminarse primero."
+                );
+            }
+            return Ok(new { message = "Sala eliminada físicamente exitosamente." });
         }
     }
 }

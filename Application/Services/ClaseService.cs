@@ -141,6 +141,22 @@ namespace Application.Services
             if (request.Fecha.HasValue)
                 clase.Fecha = request.Fecha.Value;
 
+
+
+
+            if (request.ProfesorId.HasValue)
+            {
+                clase.ProfesorId = request.ProfesorId.Value;
+            }
+            if (request.SalaId.HasValue)
+            {
+                clase.SalaId = request.SalaId.Value;
+            }
+
+
+
+            
+
             if (request.Dias != null)
             {
                 clase.Dias = request.Dias.Any() ? JsonSerializer.Serialize(request.Dias) : null;

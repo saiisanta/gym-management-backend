@@ -11,5 +11,6 @@ namespace Application.Abstractions
         bool Update(T entity);
         bool Delete(T entity);
         List<T> GetByCriterial(Expression<Func<T, bool>> expression);
+        T Add(T entity);
     }
 }

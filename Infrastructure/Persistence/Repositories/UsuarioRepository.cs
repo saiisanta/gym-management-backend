@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Application.Abstractions;
@@ -17,6 +18,43 @@ namespace Infrastructure.Persistence.Repositories
         }
 
         // ---------- MÉTODOS BÁSICOS ----------
+
+        public bool Create(Usuario usuario)
+        {
+            try
+            {
+                _context.Usuarios.Add(usuario);
+
+                int changes = _context.SaveChanges();
+
+                return changes > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[UsuarioRepository] Error al crear usuario: {ex.Message}");
+                return false;
+            }
+        }
+
+        public bool Delete(int id)
+        {
+            try
+            {
+                var usuario = _context.Usuarios.Find(id);
+                if (usuario == null)
+                    return false;
+
+                _context.Usuarios.Remove(usuario);
+
+                return _context.SaveChanges() > 0;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error al eliminar usuario (Físico): {ex.Message}");
+                return false;
+            }
+        }
+
         public Usuario? GetByEmail(string email) =>
             _context
                 .Usuarios.Include(u => u.Plan)

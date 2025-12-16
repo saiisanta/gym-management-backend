@@ -1,4 +1,5 @@
 using Application.Abstractions;
+using Application.Security; // 🟢 Importamos el namespace de seguridad
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
@@ -9,6 +10,19 @@ namespace Application.Services
     {
         private readonly IUsuarioRepository _usuarioRepository;
         private readonly IMembresiaRepository _membresiaRepository;
+
+        private string GetRoleName(int roleId)
+        {
+            return roleId switch
+            {
+                1 => "SuperAdministrador",
+                2 => "Administrador",
+                3 => "Recepcionista",
+                4 => "Alumno",
+                5 => "Profesor",
+                _ => "Alumno",
+            };
+        }
 
         public UsuarioService(
             IUsuarioRepository usuarioRepository,
@@ -71,17 +85,11 @@ namespace Application.Services
 
         public List<Contract.Responses.UsuarioResponse> GetAllDtos(int? roleId, int? sucursalId)
         {
-            // Por ahora delegamos al repositorio sin filtros
-            // TODO: Implementar filtros en el repositorio o filtrar aquí
             var usuarios = _usuarioRepository.GetAllDtos();
-
-            // Filtrar por roleId
             if (roleId.HasValue)
             {
                 usuarios = usuarios.Where(u => u.RoleId == roleId.Value).ToList();
             }
-
-            // Filtrar por sucursalId
             if (sucursalId.HasValue)
             {
                 usuarios = usuarios.Where(u => u.SucursalId == sucursalId.Value).ToList();
@@ -114,10 +122,46 @@ namespace Application.Services
             {
                 return false;
             }
+            if (string.IsNullOrWhiteSpace(request.Dni) || request.Dni == "00000000")
+            {
+                // Generamos un DNI pseudo-único usando el tiempo actual (ticks)
+                request.Dni = DateTime.Now.Ticks.ToString().Substring(0, 8);
+            }
+            if (_usuarioRepository.ExistsByDni(request.Dni))
+            {
+                return false;
+            }
+            var nuevoUsuario = new Usuario
+            {
+                Nombre = request.Nombre,
+                Apellido = request.Apellido,
+                Email = request.Email,
+                SucursalId = request.SucursalId,
+                PasswordHash = PasswordHasher.Hash(request.Password), // 🟢 Llama al método estático
+                Role = request.Role,
+                Dni = request.Dni,
+                Telefono = request.Telefono ?? string.Empty,
+                Direccion = request.Direccion ?? string.Empty,
+                FechaNacimiento =
+                    request.FechaNacimiento != default(DateOnly)
+                        ? request.FechaNacimiento
+                        : new DateOnly(1900, 1, 1),
+                Genero = request.Genero,
+                Image = request.Image,
+                PlanId = request.PlanId,
+                Activo = true,
+                FailedLoginAttempts = 0,
+            };
+            return _usuarioRepository.Create(nuevoUsuario);
+        }
 
-            // TODO: Implementar creación de usuario
-            // Esto requiere acceso al método Create del repositorio
-            return false;
+        public bool Delete(int id)
+        {
+            if (id == 1)
+            {
+                return false;
+            }
+            return _usuarioRepository.Delete(id);
         }
 
         public UsuarioResponse? Update(int id, UpdateUsuarioRequest request)
@@ -132,19 +176,23 @@ namespace Application.Services
                 usuario.Role = request.RoleId.Value switch
                 {
                     1 => "SuperAdministrador", // frontend: 1 => superadmin
-                    2 => "Administrador", // frontend: 2 => adminSucursal (ajustá el nombre si tu dominio usa otro)
+                    2 => "Administrador", // frontend: 2 => adminSucursal
                     3 => "Recepcionista", // frontend: 3 => recepcionista
                     4 => "Alumno", // frontend: 4 => cliente -> en la BD lo representás como "Alumno"
-                    5 => "Profesor", // opcional si necesitás
+                    5 => "Profesor",
                     _ => usuario.Role,
                 };
             }
 
             // PlanId: setear o borrar
             if (request.PlanId.HasValue)
+            {
                 usuario.PlanId = request.PlanId.Value;
+            }
             else if (request.PlanId == null)
+            {
                 usuario.PlanId = null;
+            }
 
             // Campos comunes
             if (!string.IsNullOrWhiteSpace(request.Nombre))
@@ -198,7 +246,7 @@ namespace Application.Services
                     "alumno" => 4,
                     "cliente" => 4,
                     "profesor" => 5,
-                    _ => 4, // fallback a "cliente" si el rol es desconocido (mejor que 0)
+                    _ => 4, // fallback a "cliente" si el rol es desconocido
                 },
                 TelNumber = usuario.Telefono,
                 Dni = usuario.Dni,

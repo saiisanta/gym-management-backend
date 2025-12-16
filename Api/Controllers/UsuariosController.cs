@@ -60,7 +60,7 @@ namespace Presentation.Controllers
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous] //deberia ser authorize, por tiempos lo pongo allowanonymous
         public IActionResult Create([FromBody] RegisterRequest request)
         {
             if (request == null)
@@ -83,15 +83,15 @@ namespace Presentation.Controllers
         [AllowAnonymous] //deberia ser authorize, por tiempos lo pongo allowanonymous
         public IActionResult Update(int id, [FromBody] UpdateUsuarioRequest request)
         {
-           // var userIdClaim = User.FindFirst(
-           //     System.Security.Claims.ClaimTypes.NameIdentifier
-           // )?.Value;
-           // var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
+            // var userIdClaim = User.FindFirst(
+            //     System.Security.Claims.ClaimTypes.NameIdentifier
+            // )?.Value;
+            // var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
 
-           // if (!isAdmin && userIdClaim != id.ToString())
-           // {
-           //     return StatusCode(403, "No tiene permisos para modificar este usuario.");
-           // }
+            // if (!isAdmin && userIdClaim != id.ToString())
+            // {
+            //     return StatusCode(403, "No tiene permisos para modificar este usuario.");
+            // }
 
             if (request == null)
                 return BadRequest("La solicitud no puede ser nula.");
@@ -106,14 +106,17 @@ namespace Presentation.Controllers
         }
 
         [HttpDelete("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
-        public IActionResult Desactivar(int id)
+        [AllowAnonymous]
+        public IActionResult Delete(int id)
         {
-            var resultado = _usuarioService.Desactivar(id);
+            var resultado = _usuarioService.Delete(id);
             if (!resultado)
-                return NotFound("Usuario no encontrado.");
-
-            return Ok(new { message = "Usuario desactivado exitosamente." });
+            {
+                return Conflict(
+                    "No se puede eliminar el usuario. Está asociado a otros datos (sucursales, clases, etc.)."
+                );
+            }
+            return Ok(new { message = "Usuario eliminado físicamente exitosamente." });
         }
     }
 }

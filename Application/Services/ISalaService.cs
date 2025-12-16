@@ -9,6 +9,9 @@ namespace Application.Services
         List<SalaResponse> GetBySucursalId(int sucursalId);
         SalaResponse? GetById(int id);
         bool Update(int id, UpdateSalaRequest request);
-        bool Desactivar(int id);
+        bool Delete(int id);
+
+        SalaResponse Create(CreateSalaRequest request);
+        
     }
 }

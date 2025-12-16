@@ -1,10 +1,11 @@
 ﻿using System;
-using System.Security.Cryptography;
 using System.Threading.Tasks;
 using Application.Abstractions;
+using Application.Security; // 🟢 Usamos la clase estática compartida
 using Contract.Requests;
 using Contract.Responses;
 using Domain.Entities;
+// 🔴 Ya no es necesario 'using System.Security.Cryptography;' aquí
 
 namespace Application.Services
 {
@@ -36,7 +37,8 @@ namespace Application.Services
 
         private DateTime? DateOnlyToNullableDateTime(DateOnly dateOnly)
         {
-            if (dateOnly == default) return null;
+            if (dateOnly == default)
+                return null;
             return dateOnly.ToDateTime(TimeOnly.MinValue);
         }
 
@@ -45,8 +47,10 @@ namespace Application.Services
         {
             if (request.Role == "Alumno")
             {
-                if (!_planRepository.IsActivo(request.PlanId)) return null;
-                if (_usuarioService.ExistsByEmail(request.Email)) return null;
+                if (!_planRepository.IsActivo(request.PlanId))
+                    return null;
+                if (_usuarioService.ExistsByEmail(request.Email))
+                    return null;
 
                 var alumno = new Alumno
                 {
@@ -57,15 +61,17 @@ namespace Application.Services
                     Telefono = request.Telefono,
                     FechaNacimiento = request.FechaNacimiento,
                     Activo = true,
-                    PasswordHash = HashPassword(request.Password),
+                    PasswordHash = PasswordHasher.Hash(request.Password), // 🟢 Usamos la clase estática
                     Role = "Alumno",
                     SucursalId = request.SucursalId,
                     Direccion = request.Direccion,
                     Genero = request.Genero,
                     Image = request.Image,
+                    PlanId = request.PlanId,
                 };
 
-                if (!_alumnoRepository.Create(alumno)) return null;
+                if (!_alumnoRepository.Create(alumno))
+                    return null;
 
                 var membresiaRequest = new CreateMembresiaRequest
                 {
@@ -73,7 +79,24 @@ namespace Application.Services
                     PlanId = request.PlanId,
                 };
 
-                if (!_membresiaService.AsociarMembresia(membresiaRequest)) return null;
+                var errorMembresia = _membresiaService.AsociarMembresia(membresiaRequest);
+
+                if (errorMembresia != null)
+                {
+                    Console.WriteLine(
+                        $"[AUTH SERVICE ERROR] Fallo al asociar membresía para Alumno ID {alumno.Id}: {errorMembresia}"
+                    );
+                    return null;
+                }
+
+                alumno.PlanId = request.PlanId;
+                if (!_alumnoRepository.Update(alumno))
+                {
+                    Console.WriteLine(
+                        $"[AUTH SERVICE ERROR] Fallo al actualizar PlanId para Alumno ID {alumno.Id}."
+                    );
+                    return null;
+                }
 
                 var nombrePlan = await _planRepository.GetNombrePlan(request.PlanId);
 
@@ -92,12 +115,13 @@ namespace Application.Services
                     SucursalId = alumno.SucursalId,
                     Image = alumno.Image,
                     PlanId = request.PlanId,
-                    PlanName = nombrePlan ?? "Sin plan"
+                    PlanName = nombrePlan ?? "Sin plan",
                 };
             }
             else if (request.Role == "Profesor")
             {
-                if (_usuarioService.ExistsByEmail(request.Email)) return null;
+                if (_usuarioService.ExistsByEmail(request.Email))
+                    return null;
 
                 var profesor = new Profesor
                 {
@@ -107,7 +131,7 @@ namespace Application.Services
                     Email = request.Email,
                     Telefono = request.Telefono,
                     Activo = true,
-                    PasswordHash = HashPassword(request.Password),
+                    PasswordHash = PasswordHasher.Hash(request.Password), // 🟢 Usamos la clase estática
                     Role = "Profesor",
                     SucursalId = request.SucursalId,
                     Direccion = request.Direccion,
@@ -115,7 +139,8 @@ namespace Application.Services
                     Image = request.Image,
                 };
 
-                if (!_profesorRepository.Create(profesor)) return null;
+                if (!_profesorRepository.Create(profesor))
+                    return null;
 
                 return new AuthResponse
                 {
@@ -131,7 +156,7 @@ namespace Application.Services
                     Genero = profesor.Genero,
                     SucursalId = profesor.SucursalId,
                     Image = profesor.Image,
-                    PlanName = "Sin plan"
+                    PlanName = "Sin plan",
                 };
             }
 
@@ -142,10 +167,12 @@ namespace Application.Services
         public async Task<AuthResponse?> Login(LoginRequest request)
         {
             var usuario = _usuarioService.GetWithPasswordByEmail(request.Email);
-            if (usuario == null) return null;
-            if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow) return null;
+            if (usuario == null)
+                return null;
+            if (usuario.LockoutEnd.HasValue && usuario.LockoutEnd.Value > DateTime.UtcNow)
+                return null;
 
-            if (VerifyPassword(request.Password, usuario.PasswordHash))
+            if (PasswordHasher.Verify(request.Password, usuario.PasswordHash)) // 🟢 Usamos la clase estática
             {
                 if (usuario.FailedLoginAttempts > 0 || usuario.LockoutEnd.HasValue)
                 {
@@ -174,7 +201,7 @@ namespace Application.Services
                     PlanId = usuario.PlanId,
                     PlanName = planNombre ?? "Sin plan",
                     SucursalId = usuario.SucursalId,
-                    Image = usuario.Image
+                    Image = usuario.Image,
                 };
             }
 
@@ -187,37 +214,7 @@ namespace Application.Services
             return null;
         }
 
-        // ================================================================
-        private string HashPassword(string password)
-        {
-            byte[] salt = new byte[16];
-            using (var rng = RandomNumberGenerator.Create())
-                rng.GetBytes(salt);
-
-            var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-            byte[] hash = pbkdf2.GetBytes(32);
-
-            byte[] hashBytes = new byte[48];
-            Array.Copy(salt, 0, hashBytes, 0, 16);
-            Array.Copy(hash, 0, hashBytes, 16, 32);
-
-            return Convert.ToBase64String(hashBytes);
-        }
-
-        private bool VerifyPassword(string password, string hash)
-        {
-            byte[] hashBytes = Convert.FromBase64String(hash);
-            byte[] salt = new byte[16];
-            Array.Copy(hashBytes, 0, salt, 0, 16);
-
-            var pbkdf2 = new Rfc2898DeriveBytes(password, salt, 10000, HashAlgorithmName.SHA256);
-            byte[] testHash = pbkdf2.GetBytes(32);
-
-            for (int i = 0; i < 32; i++)
-                if (hashBytes[i + 16] != testHash[i])
-                    return false;
-
-            return true;
-        }
+        // 🔴 Se eliminan los métodos privados HashPassword y VerifyPassword, 
+        // ya que la lógica fue movida a Application.Security.PasswordHasher.
     }
 }

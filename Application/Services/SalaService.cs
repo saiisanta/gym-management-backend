@@ -1,6 +1,7 @@
 using Application.Abstractions;
 using Contract.Requests;
 using Contract.Responses;
+using Domain.Entities;
 
 namespace Application.Services
 {
@@ -13,40 +14,71 @@ namespace Application.Services
             _salaRepository = salaRepository;
         }
 
+        public SalaResponse Create(CreateSalaRequest request)
+        {
+            var sala = new Sala
+            {
+                SucursalId = request.SucursalId,
+                Nombre = request.Nombre,
+                Tipo = request.Tipo,
+                Capacidad = request.Capacidad,
+                Descripcion = request.Descripcion,
+                Activa = true, // Por defecto
+            };
+
+            var createdSala = _salaRepository.Add(sala);
+
+            return new SalaResponse
+            {
+                Id = createdSala.Id,
+                SucursalId = createdSala.SucursalId,
+                Nombre = createdSala.Nombre,
+                Tipo = createdSala.Tipo,
+                Capacidad = createdSala.Capacidad,
+                Descripcion = createdSala.Descripcion,
+                Activa = createdSala.Activa,
+            };
+        }
+
         public List<SalaResponse> GetAll()
         {
             var salas = _salaRepository.GetAll();
-            return salas.Select(s => new SalaResponse
-            {
-                Id = s.Id,
-                SucursalId = s.SucursalId,
-                Nombre = s.Nombre,
-                Tipo = s.Tipo,
-                Capacidad = s.Capacidad,
-                Descripcion = s.Descripcion,
-                Activa = s.Activa
-            }).ToList();
+            return salas
+                .Select(s => new SalaResponse
+                {
+                    Id = s.Id,
+                    SucursalId = s.SucursalId,
+                    Nombre = s.Nombre,
+                    Tipo = s.Tipo,
+                    Capacidad = s.Capacidad,
+                    Descripcion = s.Descripcion,
+                    Activa = s.Activa,
+                })
+                .ToList();
         }
 
         public List<SalaResponse> GetBySucursalId(int sucursalId)
         {
             var salas = _salaRepository.GetBySucursalId(sucursalId);
-            return salas.Select(s => new SalaResponse
-            {
-                Id = s.Id,
-                SucursalId = s.SucursalId,
-                Nombre = s.Nombre,
-                Tipo = s.Tipo,
-                Capacidad = s.Capacidad,
-                Descripcion = s.Descripcion,
-                Activa = s.Activa
-            }).ToList();
+            return salas
+                .Select(s => new SalaResponse
+                {
+                    Id = s.Id,
+                    SucursalId = s.SucursalId,
+                    Nombre = s.Nombre,
+                    Tipo = s.Tipo,
+                    Capacidad = s.Capacidad,
+                    Descripcion = s.Descripcion,
+                    Activa = s.Activa,
+                })
+                .ToList();
         }
 
         public SalaResponse? GetById(int id)
         {
             var sala = _salaRepository.GetById(id);
-            if (sala == null) return null;
+            if (sala == null)
+                return null;
 
             return new SalaResponse
             {
@@ -56,14 +88,15 @@ namespace Application.Services
                 Tipo = sala.Tipo,
                 Capacidad = sala.Capacidad,
                 Descripcion = sala.Descripcion,
-                Activa = sala.Activa
+                Activa = sala.Activa,
             };
         }
 
         public bool Update(int id, UpdateSalaRequest request)
         {
             var sala = _salaRepository.GetById(id);
-            if (sala == null) return false;
+            if (sala == null)
+                return false;
 
             if (!string.IsNullOrWhiteSpace(request.Nombre))
                 sala.Nombre = request.Nombre;
@@ -80,13 +113,9 @@ namespace Application.Services
             return _salaRepository.Update(sala);
         }
 
-        public bool Desactivar(int id)
+        public bool Delete(int id)
         {
-            var sala = _salaRepository.GetById(id);
-            if (sala == null) return false;
-
-            sala.Activa = false;
-            return _salaRepository.Update(sala);
+            return _salaRepository.Delete(id);
         }
     }
 }

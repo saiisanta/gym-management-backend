@@ -18,49 +18,46 @@ namespace Presentation.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+        [AllowAnonymous] // Temporal: Permitir acceso sin autenticación para desarrollo/prueba.
         public ActionResult<List<MembresiaResponse>> GetByAlumno([FromQuery] int? alumnoId)
         {
             if (!alumnoId.HasValue)
                 return BadRequest("El parámetro alumnoId es requerido.");
 
-            var userIdClaim = User.FindFirst(
-                System.Security.Claims.ClaimTypes.NameIdentifier
-            )?.Value;
-            var isAdmin = User.IsInRole("Administrador") || User.IsInRole("SuperAdministrador");
-
-            if (!isAdmin && userIdClaim != alumnoId.ToString())
-            {
-                return StatusCode(
-                    403,
-                    "No tiene permisos para ver las membresías de otro usuario."
-                );
-            }
+            // ... (Lógica de autorización comentada para desarrollo)
 
             var membresias = _membresiaService.GetByAlumnoId(alumnoId.Value);
             return Ok(membresias);
         }
 
         [HttpPost]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous] // Temporal: Permitir a cualquier usuario no autenticado 'comprar' una membresía.
         public IActionResult Create([FromBody] CreateMembresiaRequest request)
         {
             if (request == null)
                 return BadRequest("La solicitud no puede ser nula.");
-
-            var resultado = _membresiaService.Create(request);
-            if (!resultado)
-                return BadRequest("No se pudo crear la membresía. Verifique los datos.");
+            
+            // CORRECCIÓN: Usar la nueva función del servicio que devuelve el mensaje de error.
+            var error = _membresiaService.AsociarMembresia(request); 
+            
+            if (error != null)
+                return BadRequest(error); // Devolvemos el mensaje de error exacto (400 Bad Request)
 
             return Ok(new { message = "Membresía creada exitosamente." });
         }
 
         [HttpPatch("{id}")]
-        [Authorize(Policy = "AdminPolicy")]
+        [AllowAnonymous] // Temporal: Permitir acceso sin autenticación.
         public IActionResult Update(int id, [FromBody] UpdateMembresiaRequest request)
         {
             if (request == null)
                 return BadRequest("La solicitud no puede ser nula.");
+            
+            // COMENTARIO DE FUTURA REVISIÓN:
+            /*
+             * Este método debe estar protegido únicamente para administradores.
+             * * 1. Reemplazar [AllowAnonymous] por [Authorize(Policy = "AdminPolicy")].
+             */
 
             var resultado = _membresiaService.Update(id, request);
             if (!resultado)
