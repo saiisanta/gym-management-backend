@@ -34,4 +34,4 @@ ENV ASPNETCORE_URLS=http://+:$PORT
 
 # Comando para ejecutar la aplicación
 # Usa el nombre de la DLL del proyecto de la API (Presentation.dll)
-ENTRYPOINT ["dotnet", "Presentation.dll"]
+ENTRYPOINT /bin/bash -c "dotnet ef database update --project Infrastructure --startup-project Presentation.csproj && dotnet Presentation.dll"
