@@ -6,6 +6,7 @@ using Infrastructure.Persistence.Repositories;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using Npgsql.EntityFrameworkCore.PostgreSQL; // <- Importante para PostgreSQL
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -127,9 +128,32 @@ builder.Services.AddSwaggerGen(c =>
         }
     );
 });
+
+// =========================================================================
+// CAMBIO CRÍTICO: CONFIGURACIÓN DE POSTGRESQL PARA RENDER
+// =========================================================================
+
+// 1. Obtener la cadena de conexión de appsettings (para desarrollo local)
+var connectionString = builder.Configuration.GetConnectionString("PostgreSql");
+
+// 2. Si la cadena es nula o vacía (como en el entorno de Render),
+//    intentar obtenerla de la variable de entorno estándar de Render.
+if (string.IsNullOrEmpty(connectionString))
+{
+    // Esta variable es inyectada automáticamente por Render al vincular la DB
+    connectionString = Environment.GetEnvironmentVariable("InternalDatabaseURL");
+}
+
+// 3. Configurar el DbContext usando la cadena de conexión determinada
+//    y el proveedor Npgsql.
 builder.Services.AddDbContext<GymDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection"))
-);
+{
+    options.UseNpgsql(connectionString);
+});
+
+// =========================================================================
+// FIN DEL CAMBIO
+// =========================================================================
 
 builder.Services.AddScoped<IAlumnoService, AlumnoService>();
 builder.Services.AddScoped<IProfesorService, ProfesorService>();
