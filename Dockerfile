@@ -28,15 +28,18 @@ RUN dotnet publish "Api/Presentation.csproj" -c Release -o /app/publish
 # ==================================
 # ETAPA 2: RUNTIME (Ejecución)
 # ==================================
-# Usa la imagen del SDK para tener 'dotnet ef'
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
 WORKDIR /app
 
 # Copia los archivos publicados desde la etapa de build
 COPY --from=build /app/publish .
 
+# 🚨 NUEVAS LÍNEAS CLAVE: Copia el script y dale permisos
+COPY entrypoint.sh .
+RUN chmod +x entrypoint.sh
+
 # Define el puerto que la aplicación escuchará (importante para Render)
 ENV ASPNETCORE_URLS=http://+:$PORT
 
-# 🚨 NUEVA LÍNEA CLAVE: Invocar la DLL de EF Core directamente
-ENTRYPOINT ["dotnet", "Presentation.dll"]
+# El ENTRYPOINT del Dockerfile ahora apunta al script
+ENTRYPOINT ["./entrypoint.sh"]
