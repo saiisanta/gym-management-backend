@@ -10,7 +10,7 @@ WORKDIR /src
 COPY *.sln .
 COPY **/*.csproj ./
 
-RUN dotnet restore
+RUN dotnet restore gym-management-api.sln
 
 # Copia todos los archivos restantes de la solución
 COPY . .
