@@ -39,4 +39,4 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_URLS=http://+:$PORT
 
 # 🚨 NUEVA LÍNEA CLAVE: Invocar la DLL de EF Core directamente
-ENTRYPOINT /bin/bash -c "dotnet exec $(find / -name 'dotnet-ef.dll' | head -1) database update --project Infrastructure --startup-project Api/Presentation.csproj && dotnet Presentation.dll"
+ENTRYPOINT ["dotnet", "Presentation.dll"]
