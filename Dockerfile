@@ -41,5 +41,5 @@ RUN chmod +x entrypoint.sh
 # Define el puerto que la aplicación escuchará (importante para Render)
 ENV ASPNETCORE_URLS=http://+:$PORT
 
-# El ENTRYPOINT del Dockerfile ahora apunta al script
-ENTRYPOINT ["./entrypoint.sh"]
+# El ENTRYPOINT del Dockerfile ahora apunta al script usando la shell básica
+ENTRYPOINT ["/bin/sh", "./entrypoint.sh"]
