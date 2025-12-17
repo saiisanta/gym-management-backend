@@ -33,5 +33,6 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_URLS=http://+:$PORT
 
 # Comando para ejecutar la aplicación
-# Usa el nombre de la DLL del proyecto de la API (Presentation.dll)
-ENTRYPOINT /bin/bash -c "dotnet ef database update --project Infrastructure --startup-project Presentation.csproj && dotnet Presentation.dll"
+# 🚨 AJUSTE DE RUTAS EN EL ENTRYPOINT
+# Se agrega "Api/" a Presentation.csproj para reflejar la estructura del proyecto original.
+ENTRYPOINT /bin/bash -c "dotnet ef database update --project Infrastructure --startup-project Api/Presentation.csproj && dotnet Presentation.dll"
