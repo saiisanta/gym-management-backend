@@ -32,15 +32,11 @@ RUN dotnet publish "Api/Presentation.csproj" -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
 WORKDIR /app
 
-# 🚨 NUEVA LÍNEA CLAVE: Instala la herramienta dotnet-ef en el runtime
-RUN dotnet tool install --global dotnet-ef
-
 # Copia los archivos publicados desde la etapa de build
 COPY --from=build /app/publish .
 
 # Define el puerto que la aplicación escuchará (importante para Render)
 ENV ASPNETCORE_URLS=http://+:$PORT
 
-# Comando para ejecutar la aplicación
-# El ENTRYPOINT se mantiene simple, ya que 'dotnet ef' ahora está en el PATH
-ENTRYPOINT /bin/bash -c "dotnet ef database update --project Infrastructure --startup-project Api/Presentation.csproj && dotnet Presentation.dll"
+# 🚨 NUEVA LÍNEA CLAVE: Invocar la DLL de EF Core directamente
+ENTRYPOINT /bin/bash -c "dotnet exec $(find / -name 'dotnet-ef.dll' | head -1) database update --project Infrastructure --startup-project Api/Presentation.csproj && dotnet Presentation.dll"
