@@ -5,14 +5,20 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copia el archivo de la solución (.sln) y todos los archivos de proyecto (.csproj) 
-# para que 'dotnet restore' pueda resolver las dependencias entre proyectos.
-COPY *.sln .
-COPY **/*.csproj ./
+# 1. Copia el archivo de la solución a la raíz
+COPY GymManagement.sln .
 
+# 2. Copia los archivos .csproj necesarios, manteniendo la estructura de carpetas
+COPY Domain/*.csproj ./Domain/
+COPY Application/*.csproj ./Application/
+COPY Infrastructure/*.csproj ./Infrastructure/
+COPY Contract/*.csproj ./Contract/
+COPY Api/*.csproj ./Api/
+
+# 3. Ejecuta restore con el nombre de la solución
 RUN dotnet restore GymManagement.sln
 
-# Copia todos los archivos restantes de la solución
+# 4. Copia el resto del código (los archivos .cs, etc.)
 COPY . .
 
 # Compila y publica SOLO el proyecto principal (Presentation.csproj), 
