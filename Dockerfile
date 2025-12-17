@@ -28,8 +28,8 @@ RUN dotnet publish "Api/Presentation.csproj" -c Release -o /app/publish
 # ==================================
 # ETAPA 2: RUNTIME (Ejecución)
 # ==================================
-# Usa la imagen oficial de ASP.NET Runtime (mucho más pequeña)
-FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS final
+# 🚨 CAMBIO AQUÍ: Usamos la imagen del SDK para tener el 'dotnet ef'
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS final
 WORKDIR /app
 
 # Copia los archivos publicados desde la etapa de build
@@ -39,6 +39,4 @@ COPY --from=build /app/publish .
 ENV ASPNETCORE_URLS=http://+:$PORT
 
 # Comando para ejecutar la aplicación
-# 🚨 AJUSTE DE RUTAS EN EL ENTRYPOINT
-# Se agrega "Api/" a Presentation.csproj para reflejar la estructura del proyecto original.
 ENTRYPOINT /bin/bash -c "dotnet ef database update --project Infrastructure --startup-project Api/Presentation.csproj && dotnet Presentation.dll"
